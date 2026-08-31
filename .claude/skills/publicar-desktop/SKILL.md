@@ -82,7 +82,28 @@ Mensagem no padrão do repositório: primeira linha no imperativo dizendo o que
 mudou e a versão (ex.: `Sobe para 1.1.0 e publica o instalador`), corpo em
 tópicos com o motivo de cada mudança relevante.
 
-## 5. Build + publicação
+## 5. Criar a release **antes** do build
+
+Sim, antes — e vazia. O electron-builder dispara um publisher por arquivo, em
+paralelo; se a release ainda não existir, dois deles perguntam "existe?" ao
+mesmo tempo, ouvem "não" e **criam duas releases com a mesma tag**, cada uma com
+parte dos arquivos. Nenhuma das duas atualiza ninguém, e a limpeza é na mão.
+Com a release já criada, todos os publishers a encontram e só anexam.
+
+Confira também para onde a tag aponta — ela pode já existir de um bump antigo,
+e aí a release fica pendurada num commit que não é o que gerou o instalador:
+
+```bash
+git ls-remote --tags origin v1.1.0     # vazio = ok; senão, veja se é o commit certo
+git tag -f v1.1.0 && git push --force origin v1.1.0    # só se estiver no commit errado
+gh release create v1.1.0 --target main --title "Planner Fofo 1.1.0 🌸" --notes-file <arquivo>
+```
+
+As notas vêm do passo 7 — escreva-as agora, já que a release nasce aqui. Se ela
+já existir (a skill `publicar-apk` pode tê-la criado com o APK), pule o
+`create`: é o caso esperado.
+
+## 6. Build + publicação
 
 ```bash
 GH_TOKEN=$(gh auth token) npm run desktop:release
@@ -94,10 +115,9 @@ GH_TOKEN=$(gh auth token) npm run desktop:release
 Isso faz `electron-vite build` e depois `electron-builder --publish always`, que
 sobe o instalador, o `.blockmap` e o `latest.yml` para a release `v1.1.0`.
 
-**Se a release da versão já existir** (a skill `publicar-apk` pode tê-la criado
-com o APK), o electron-builder anexa os arquivos na release existente — é o
-comportamento esperado, não crie outra. Se ele reclamar da release já publicada,
-use o caminho manual:
+Com a release já criada no passo 5, os publishers só anexam os arquivos nela —
+é o comportamento esperado, não crie outra. Se algum reclamar da release já
+publicada, use o caminho manual:
 
 ```bash
 npm run desktop:package
@@ -107,7 +127,7 @@ cd apps/desktop && gh release upload v1.1.0 \
   "release/latest.yml" --clobber
 ```
 
-## 6. Conferir a release
+## 7. Conferir a release
 
 Uma release **só atualiza os apps instalados se tiver os três arquivos**:
 
@@ -119,10 +139,11 @@ Tem que aparecer `PlannerFofo-1.1.0-setup.exe`, `...exe.blockmap` e
 `latest.yml`. Se houver um `.apk` junto, ótimo — é a release compartilhada com
 o mobile; não apague nada dela.
 
-## 7. Título e notas
+## 8. Título e notas
 
-O electron-builder cria a release sem título nem descrição. Ajuste no padrão do
-repositório (`Planner Fofo 1.0.0 🌸`):
+Se a release nasceu no passo 5, o título e as notas já foram escritos ali —
+confira e siga. Se ela veio do electron-builder, nasceu sem título nem descrição
+e precisa ser ajustada no padrão do repositório (`Planner Fofo 1.0.0 🌸`):
 
 ```bash
 git log --oneline v1.0.0..v1.1.0        # base para as notas
@@ -143,6 +164,19 @@ sobrescreva o que já está lá.
 - **NSIS `perMachine: false`**, senão a atualização automática pede UAC.
 - **Só existe atualização automática no desktop.** O mobile não tem
   `expo-updates` de propósito — não instale "só para testar".
+- **Duas releases na mesma tag.** Já aconteceu (v1.0.1): os publishers correram
+  em paralelo e cada um criou a sua, com os arquivos divididos. Assets não se
+  movem entre releases — a saída é apagar a menor (`gh api -X DELETE
+  repos/Lintzz/planner-fofo/releases/<id>`, conferindo antes que ninguém baixou)
+  e reenviar o que faltava com `gh release upload ... --clobber`. Achar as
+  duplicatas: `gh api repos/Lintzz/planner-fofo/releases --jq '.[] |
+  select(.tag_name=="v1.1.0") | {id, assets: [.assets[].name]}'`.
+- **A tag pode ser mais velha que o commit.** Um bump anterior já pode ter
+  criado a tag; o electron-builder reaproveita a que existe e a release acaba
+  apontando para código que não é o do instalador. Confira no passo 5.
+- **Conferir que o `latest.yml` casa com o `.exe`** publicado, e não só que os
+  três nomes estão lá: `curl -sL .../v1.1.0/latest.yml` e compare `sha512` e
+  `size` com `apps/desktop/release/latest.yml`.
 - **Publicou versão errada?** Não dá para "despublicar" com segurança: suba uma
   versão nova e corrija. `gh release delete` só se ninguém tiver baixado ainda,
   e sempre perguntando antes.
