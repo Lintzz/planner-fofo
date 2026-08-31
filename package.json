@@ -1,0 +1,38 @@
+{
+  "name": "planner-fofo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Planner Fofo — planner de habitos, estudos e tarefas. Monorepo mobile (Expo) + desktop (Electron/Vite).",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "mobile": "npm run start --workspace @planner-fofo/mobile",
+    "mobile:android": "npm run android --workspace @planner-fofo/mobile",
+    "mobile:ios": "npm run ios --workspace @planner-fofo/mobile",
+    "desktop": "npm run dev --workspace @planner-fofo/desktop",
+    "desktop:build": "npm run build --workspace @planner-fofo/desktop",
+    "desktop:package": "npm run package --workspace @planner-fofo/desktop",
+    "desktop:release": "npm run release --workspace @planner-fofo/desktop",
+    "db:link": "supabase link",
+    "db:push": "supabase db push",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --linked > packages/shared/src/database.types.ts",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "check:db": "node scripts/checar-supabase.mjs",
+    "icones": "node scripts/gerar-icones.mjs"
+  },
+  "devDependencies": {
+    "supabase": "^2.116.0",
+    "typescript": "~5.9.2"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "expo": "~54.0.37",
+    "react": "19.1.0",
+    "react-native": "0.81.5"
+  }
+}

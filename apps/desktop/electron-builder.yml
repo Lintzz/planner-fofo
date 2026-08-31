@@ -1,0 +1,38 @@
+appId: com.plannerfofo.desktop
+productName: Planner Fofo
+directories:
+  buildResources: build
+  output: release
+files:
+  - out/**
+  - package.json
+
+# Origem das atualizacoes. O `electron-updater` le o `latest.yml` publicado
+# junto do instalador na release mais recente deste repositorio.
+publish:
+  provider: github
+  owner: Lintzz
+  repo: planner-fofo
+  releaseType: release
+
+win:
+  target: nsis
+  # Sem espacos no nome: o GitHub troca espaco por ponto no nome do asset e o
+  # `latest.yml` deixaria de casar com a URL de download.
+  artifactName: PlannerFofo-${version}-setup.${ext}
+nsis:
+  # Instalador por usuaria: nao pede UAC, entao a atualizacao automatica
+  # consegue se instalar sozinha sem prompt de administrador.
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Planner Fofo
+
+mac:
+  target: dmg
+  category: public.app-category.productivity
+linux:
+  target: AppImage
+  category: Utility

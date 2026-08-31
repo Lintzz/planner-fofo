@@ -1,0 +1,37 @@
+# Configuracao do Supabase CLI para o Planner Fofo.
+# `project_id` e so o nome da pasta local do stack de desenvolvimento.
+project_id = "planner-fofo"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+# Redirects usados pelo desktop (Vite) e pelo app mobile (deep link do Expo).
+additional_redirect_urls = ["http://localhost:5173", "plannerfofo://"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+# No stack local o e-mail nao sai de verdade; confirmar atrapalharia os testes.
+enable_confirmations = false
+
+[inbucket]
+enabled = true
+port = 54324

@@ -1,0 +1,28 @@
+# Fim de linha normalizado: LF no repositorio, independente do sistema de quem
+# clona. Sem isto, um checkout no Windows commita o arquivo inteiro de volta so
+# porque o CRLF entrou no meio.
+* text=auto eol=lf
+
+# Scripts do Windows precisam de CRLF para rodar.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binarios: nunca normalizar.
+*.png binary
+*.jpg binary
+*.ico binary
+*.icns binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.exe binary
+*.dmg binary
+*.AppImage binary
+*.apk binary
+*.jar binary
+*.keystore binary
+
+# Arquivo gerado: some da revisao de PR e nao conta como diff de codigo.
+package-lock.json linguist-generated=true -diff

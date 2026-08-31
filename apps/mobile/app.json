@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Planner Fofo",
+    "slug": "planner-fofo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "plannerfofo",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#fce7f3"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.plannerfofo.app"
+    },
+    "android": {
+      "package": "com.plannerfofo.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icone-adaptativo.png",
+        "backgroundColor": "#e494e0"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {}
+    },
+    "icon": "./assets/icone.png"
+  }
+}

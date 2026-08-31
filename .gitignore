@@ -1,0 +1,48 @@
+# Dependencias
+node_modules/
+
+# Ambiente — nunca commitar credenciais
+.env
+.env.local
+.env.*.local
+apps/*/.env
+apps/*/.env.local
+
+# Expo
+.expo/
+.expo-shared/
+web-build/
+# Projetos nativos gerados por `expo prebuild` / `expo run:android`
+apps/mobile/android/
+apps/mobile/ios/
+# Idem, quando o comando roda por engano na raiz do monorepo
+/android/
+/ios/
+/app.json
+
+# Build
+dist/
+dist-electron/
+apps/desktop/out/
+# Instaladores gerados pelo electron-builder
+apps/desktop/release/
+release/
+# `build/` e saida de compilacao em quase todo lugar, menos em apps/desktop,
+# onde e o `buildResources` do electron-builder (icone do executavel).
+build/
+!apps/desktop/build/
+!apps/desktop/build/**
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+
+# Diversos
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Claude Code — preferencias locais
+.claude/settings.local.json

@@ -1,0 +1,13 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@planner-fofo/shared": ["../../packages/shared/src/index.ts"],
+      "@planner-fofo/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "../../packages/shared/src/**/*.ts"],
+  "exclude": ["node_modules"]
+}
