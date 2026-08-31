@@ -36,6 +36,30 @@ function lerEnvDaRaiz() {
   return saida;
 }
 
+/**
+ * `versionCode` derivado da `version`, para nao existir um segundo numero de
+ * versao para manter na mao.
+ *
+ * O Android nao olha a `version` (a string que a pessoa le): quem manda na
+ * atualizacao e o `versionCode`, um inteiro que **tem de crescer**. O template
+ * deixa ele fixo em 1, entao todo APK sairia com o mesmo numero e o sistema
+ * trataria uma versao nova como se fosse a mesma.
+ *
+ *   1.0.0 -> 10000     1.2.3 -> 10203     2.0.0 -> 20000
+ *
+ * Minor e patch vao ate 99, o que e de sobra aqui.
+ */
+function versionCodeDe(versao) {
+  const [maior = 0, menor = 0, correcao = 0] = String(versao).split('.').map(Number);
+  if (menor > 99 || correcao > 99) {
+    throw new Error(
+      `Planner Fofo: versao ${versao} nao cabe na formula do versionCode ` +
+        '(minor e patch vao ate 99). Ajuste versionCodeDe() em app.config.js.',
+    );
+  }
+  return maior * 10000 + menor * 100 + correcao;
+}
+
 module.exports = ({ config }) => {
   const doArquivo = lerEnvDaRaiz();
   // Variável já exportada no shell tem prioridade sobre o arquivo.
@@ -57,6 +81,10 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
+    android: {
+      ...config.android,
+      versionCode: versionCodeDe(config.version),
+    },
     plugins: [
       ...(config.plugins ?? []),
       // Assina o APK de release com a chave de verdade, e nao com a de debug

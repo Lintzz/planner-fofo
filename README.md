@@ -7,7 +7,7 @@
 [![Release](https://img.shields.io/github/v/release/Lintzz/planner-fofo?style=flat-square&color=ff8fc4&label=vers%C3%A3o)](https://github.com/Lintzz/planner-fofo/releases/latest)
 [![Download](https://img.shields.io/github/downloads/Lintzz/planner-fofo/total?style=flat-square&color=b78af0&label=downloads)](https://github.com/Lintzz/planner-fofo/releases)
 [![Windows](https://img.shields.io/badge/Windows-instalador-8fc3ff?style=flat-square)](https://github.com/Lintzz/planner-fofo/releases/latest)
-[![Android](https://img.shields.io/badge/Android-Expo-7fd8b8?style=flat-square)](#-android)
+[![Android](https://img.shields.io/badge/Android-Expo-7fd8b8?style=flat-square)](#android)
 
 </div>
 
@@ -91,7 +91,7 @@ app transpila o TypeScript junto — via `alias` no `electron.vite.config.ts` e
 | Camada | Escolha |
 | --- | --- |
 | Núcleo | TypeScript strict, sem dependência de UI |
-| Desktop | Electron 33 · React 19 · Vite 5 · electron-vite |
+| Desktop | Electron 44 · React 19 · Vite 5 · electron-vite |
 | Mobile | React Native 0.81 · Expo SDK 54 · react-native-svg |
 | Backend | Supabase (Postgres + Auth + RLS) |
 | Distribuição | electron-builder (NSIS) + electron-updater |
@@ -231,12 +231,19 @@ Detalhes que importam:
 ### Publicando uma versão nova
 
 ```bash
-# 1. suba a versão nos dois lugares
-npm version 1.1.0 --workspace @planner-fofo/desktop --no-git-tag-version
+# 1. sobe a versão nos quatro arquivos de uma vez (desktop, mobile e raiz)
+npm run versao 1.1.0
 
 # 2. build + upload da release (precisa de GH_TOKEN com escopo `repo`)
 GH_TOKEN=$(gh auth token) npm run desktop:release
+
+# 3. o APK do Android, para anexar na mesma release
+npm run mobile:apk
 ```
+
+`npm run versao` sem argumento só confere se os quatro arquivos estão na mesma
+versão — vale rodar antes de publicar. O `versionCode` do Android não entra
+nessa lista porque é derivado da versão em `app.config.js`, então anda sozinho.
 
 O `electron-builder` cria a release `v1.1.0` e envia o instalador, o `.blockmap`
 e o `latest.yml`. Todo app instalado pega a atualização na próxima abertura.
@@ -337,6 +344,7 @@ pode se substituir sozinho. Dois caminhos, se isso virar necessidade:
 | `npm run typecheck` | TypeScript em todos os workspaces |
 | `npm run check:db` | sanidade do backend com a chave pública (sai 1 se falhar) |
 | `npm run icones` | regenera os ícones dos dois apps (PNG procedural) |
+| `npm run versao` | mostra ou sobe a versão de todos os apps de uma vez |
 
 Não há suíte de testes automatizados. A validação vai do mais barato ao mais
 caro — `check:db` → `typecheck` → build/bundle → app rodando — e está descrita

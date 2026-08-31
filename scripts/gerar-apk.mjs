@@ -46,7 +46,30 @@ if (!existsSync(ANDROID)) {
 const appJson = JSON.parse(readFileSync(join(RAIZ, 'apps/mobile/app.json'), 'utf8'));
 const versao = appJson.expo?.version ?? '0.0.0';
 
-// --- 3. Build --------------------------------------------------------------
+// --- 3. Sincroniza o projeto nativo -----------------------------------------
+
+/**
+ * `android/app/build.gradle` e um arquivo **gerado**: o `versionName`, o
+ * `versionCode` e os config plugins sao escritos ali pelo `expo prebuild`. O
+ * Gradle sozinho nunca le o `app.json`.
+ *
+ * Sem este passo, subir a versao e rodar o build produz um APK carimbado com a
+ * versao ANTIGA — e o erro e silencioso: o build passa, o arquivo sai com o
+ * nome novo e so o `aapt dump badging` denuncia. O prebuild e incremental,
+ * entao custa poucos segundos e fecha esse buraco.
+ */
+console.log(`\n🌸 Planner Fofo ${versao} — sincronizando o projeto nativo...\n`);
+
+const prebuild = spawnSync(
+  ehWindows ? 'cmd.exe' : 'npx',
+  ehWindows
+    ? ['/d', '/s', '/c', 'npx', 'expo', 'prebuild', '--platform', 'android']
+    : ['expo', 'prebuild', '--platform', 'android'],
+  { cwd: join(RAIZ, 'apps/mobile'), stdio: 'inherit' },
+);
+if (prebuild.status !== 0) morrer('o `expo prebuild` falhou.');
+
+// --- 4. Build --------------------------------------------------------------
 
 console.log(`\n🌸 Planner Fofo ${versao} — montando o APK de release...\n`);
 
@@ -65,7 +88,7 @@ const gradle = ehWindows
 if (gradle.status !== 0) morrer('o Gradle falhou. A saida acima diz onde.');
 if (!existsSync(APK_GRADLE)) morrer(`o Gradle terminou, mas nao achei ${APK_GRADLE}.`);
 
-// --- 4. Com qual chave? ----------------------------------------------------
+// --- 5. Com qual chave? ----------------------------------------------------
 
 /** `apksigner` fica no build-tools mais novo instalado. */
 function acharApksigner() {
@@ -113,7 +136,7 @@ if (apksigner) {
   console.warn('\n⚠️  apksigner nao encontrado no Android SDK; pulei a conferencia da assinatura.');
 }
 
-// --- 5. Copia com nome de versao -------------------------------------------
+// --- 6. Copia com nome de versao -------------------------------------------
 
 mkdirSync(SAIDA, { recursive: true });
 const destino = join(SAIDA, `PlannerFofo-${versao}.apk`);

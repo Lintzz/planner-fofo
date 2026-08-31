@@ -44,7 +44,7 @@ release mais recente, baixar em segundo plano e oferecer o reinicio. So roda com
 
 ```bash
 npm run desktop:package                        # instalador local, sem publicar
-npm version 1.1.0 --workspace @planner-fofo/desktop --no-git-tag-version
+npm run versao 1.1.0                           # sobe a versao nos 4 arquivos
 GH_TOKEN=$(gh auth token) npm run desktop:release   # build + release no GitHub
 ```
 
@@ -59,6 +59,12 @@ Regras que ja custaram tempo:
 - O NSIS e `perMachine: false` para a atualizacao se instalar sem UAC.
 - Uma release so serve para atualizar se tiver os tres arquivos: o `.exe`, o
   `.blockmap` e o `latest.yml`.
+- A versao mora em quatro arquivos; use `npm run versao <x.y.z>` em vez de
+  editar na mao, senao o instalador e o APK saem com numeros diferentes dentro
+  da mesma release. Sem argumento, o script so confere se estao alinhados.
+- O `versionCode` do Android e derivado da versao em `app.config.js`
+  (1.0.0 -> 10000). O template do Expo deixa fixo em 1, e ai o Android trata
+  toda versao nova como se fosse a mesma.
 
 ## Arquitetura
 

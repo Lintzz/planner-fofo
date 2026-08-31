@@ -1,6 +1,6 @@
 {
   "name": "@planner-fofo/desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Planner Fofo para desktop — Electron + React + Vite.",
   "author": {
@@ -31,8 +31,8 @@
     "@types/react": "~19.1.0",
     "@types/react-dom": "~19.1.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "electron": "33.4.11",
-    "electron-builder": "^25.1.8",
+    "electron": "44.0.0",
+    "electron-builder": "^26.15.3",
     "electron-vite": "^2.3.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",

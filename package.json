@@ -1,7 +1,7 @@
 {
   "name": "planner-fofo",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Planner Fofo — planner de habitos, estudos e tarefas. Monorepo mobile (Expo) + desktop (Electron/Vite).",
   "workspaces": [
     "apps/*",
@@ -22,7 +22,8 @@
     "db:types": "supabase gen types typescript --linked > packages/shared/src/database.types.ts",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "check:db": "node scripts/checar-supabase.mjs",
-    "icones": "node scripts/gerar-icones.mjs"
+    "icones": "node scripts/gerar-icones.mjs",
+    "versao": "node scripts/versao.mjs"
   },
   "devDependencies": {
     "supabase": "^2.116.0",
