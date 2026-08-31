@@ -4,6 +4,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { DIAS, contadorDaSemana, type HabitoDaSemana } from '@planner-fofo/shared';
 import { CORES, F, paleta, sombra } from '../tema';
 
+/**
+ * Editar é segurar o cartão — o mesmo gesto das listas de Estudos e Avulsas.
+ * O lápis saiu: no celular ele ficava colado no check de marcar, e o toque
+ * errado abria a folha de edição em vez de concluir o hábito.
+ */
 export function CartaoHabito({
   habito,
   indiceHoje,
@@ -19,7 +24,17 @@ export function CartaoHabito({
   const feito = habito.semana[indiceHoje];
 
   return (
-    <View style={[estilos.cartao, { backgroundColor: p.bg, borderColor: p.borda }, sombra('suave')]}>
+    <Pressable
+      onLongPress={aoEditar}
+      accessibilityLabel={`Editar ${habito.nome}`}
+      accessibilityHint="Segure para editar"
+      style={({ pressed }) => [
+        estilos.cartao,
+        { backgroundColor: p.bg, borderColor: p.borda },
+        sombra('suave'),
+        pressed && estilos.cartaoPressionado,
+      ]}
+    >
       <View style={estilos.linha}>
         <View style={[estilos.emojiCaixa, sombra('suave')]}>
           <Text style={estilos.emoji}>{habito.emoji}</Text>
@@ -31,15 +46,6 @@ export function CartaoHabito({
           </Text>
           <Text style={[estilos.contador, { color: p.suave }]}>{contadorDaSemana(habito)}</Text>
         </View>
-
-        <Pressable
-          onPress={aoEditar}
-          hitSlop={8}
-          accessibilityLabel={`Editar ${habito.nome}`}
-          style={estilos.editar}
-        >
-          <Text style={{ color: p.suave, fontSize: 13 }}>✎</Text>
-        </Pressable>
 
         <Pressable
           onPress={aoAlternar}
@@ -81,12 +87,13 @@ export function CartaoHabito({
           );
         })}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 const estilos = StyleSheet.create({
   cartao: { borderRadius: 26, paddingVertical: 15, paddingHorizontal: 16, borderWidth: 1.5, gap: 12 },
+  cartaoPressionado: { opacity: 0.7 },
   linha: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   emojiCaixa: {
     width: 42,
@@ -100,7 +107,6 @@ const estilos = StyleSheet.create({
   textos: { flex: 1, gap: 3, minWidth: 0 },
   nome: { fontFamily: F.baloo, fontSize: 16.5, lineHeight: 19 },
   contador: { fontFamily: F.nunito, fontSize: 11.5 },
-  editar: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   check: {
     width: 40,
     height: 40,

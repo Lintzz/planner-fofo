@@ -38,8 +38,10 @@ build/
 *.p12
 *.keystore
 keystore.properties
-# APKs gerados por `npm run mobile:apk`
-apps/mobile/release/
+# Builds locais do EAS (`eas build --local`)
+apps/mobile/*.apk
+apps/mobile/*.aab
+apps/mobile/build-*.tar.gz
 
 # Supabase local
 supabase/.branches/

@@ -1,4 +1,4 @@
-/** Modal de novo item das listas de Estudos / Avulsas. */
+/** Modal de novo item / edição das listas de Estudos / Avulsas. */
 import React, { useEffect, useState } from 'react';
 import {
   CHAVES_PALETA,
@@ -48,6 +48,8 @@ export function ModalItem({ planner }: { planner: PlannerStore }) {
   if (!rascunhoItem) return null;
 
   const textos = textosDaLista(rascunhoItem.lista === 'estudos');
+  const editando = Boolean(rascunhoItem.id);
+  const titulo = editando ? textos.tituloModalEdicao : textos.tituloModal;
 
   return (
     <div
@@ -56,9 +58,9 @@ export function ModalItem({ planner }: { planner: PlannerStore }) {
         if (e.target === e.currentTarget) fechar();
       }}
     >
-      <div className="modal modal--item" role="dialog" aria-modal aria-label={textos.tituloModal}>
+      <div className="modal modal--item" role="dialog" aria-modal aria-label={titulo}>
         <div className="modal__cabecalho">
-          <span className="modal__titulo">{textos.tituloModal}</span>
+          <span className="modal__titulo">{titulo}</span>
           <button type="button" className="modal__fechar" onClick={fechar} aria-label="Fechar">
             ✕
           </button>
@@ -199,7 +201,7 @@ export function ModalItem({ planner }: { planner: PlannerStore }) {
           className="botao-salvar"
           onClick={() => void planner.salvarItem()}
         >
-          {textos.rotuloSalvar}
+          {editando ? textos.rotuloSalvarEdicao : textos.rotuloSalvar}
         </button>
         <span className="nota">isso não entra na porcentagem do dia 💗</span>
       </div>

@@ -1,4 +1,4 @@
-/** Modal de novo item das listas de Estudos / Avulsas. */
+/** Modal de novo item / edição das listas de Estudos / Avulsas. */
 import React, { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -53,6 +53,7 @@ export function ModalItem({ planner }: { planner: PlannerStore }) {
 
   const ehEstudos = rascunhoItem?.lista === 'estudos';
   const textos = textosDaLista(Boolean(ehEstudos));
+  const editando = Boolean(rascunhoItem?.id);
 
   return (
     <Modal
@@ -75,7 +76,9 @@ export function ModalItem({ planner }: { planner: PlannerStore }) {
               showsVerticalScrollIndicator={false}
             >
               <View style={estilos.cabecalho}>
-                <Text style={estilos.titulo}>{textos.tituloModal}</Text>
+                <Text style={estilos.titulo}>
+                  {editando ? textos.tituloModalEdicao : textos.tituloModal}
+                </Text>
                 <Pressable onPress={fechar} style={estilos.fechar} hitSlop={8}>
                   <Text style={estilos.fecharIcone}>✕</Text>
                 </Pressable>
@@ -86,7 +89,8 @@ export function ModalItem({ planner }: { planner: PlannerStore }) {
                 <TextInput
                   value={rascunhoItem.texto}
                   onChangeText={(texto) => planner.mudarRascunhoItem({ texto })}
-                  onSubmitEditing={() => void planner.salvarItem()}
+                  // Sem `onSubmitEditing`: o "ok" do teclado do celular so fecha
+                  // o teclado. Publicar e so pelo botao de salvar.
                   returnKeyType="done"
                   placeholder={textos.placeholder}
                   placeholderTextColor="#d8bede"
@@ -247,7 +251,9 @@ export function ModalItem({ planner }: { planner: PlannerStore }) {
                   cores={GRADIENTES.primario}
                   style={[estilos.salvar, sombra('media', '#b450b4')]}
                 >
-                  <Text style={estilos.salvarTexto}>{textos.rotuloSalvar}</Text>
+                  <Text style={estilos.salvarTexto}>
+                    {editando ? textos.rotuloSalvarEdicao : textos.rotuloSalvar}
+                  </Text>
                 </Gradiente>
               </Pressable>
 

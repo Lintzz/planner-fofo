@@ -50,6 +50,10 @@ O APK sai em **[Releases](https://github.com/Lintzz/planner-fofo/releases/latest
 liberar *"instalar apps desconhecidos"* para o navegador ou gerenciador de
 arquivos na primeira vez.
 
+> **No Android a atualização é manual.** Diferente do desktop, o app não busca
+> versão nova sozinho: baixe o APK mais recente e instale por cima — o Android
+> mantém os dados, desde que o APK venha assinado com a mesma chave.
+
 Para gerar o seu, veja [APK do Android](#-apk-do-android).
 
 ---
@@ -238,7 +242,7 @@ npm run versao 1.1.0
 GH_TOKEN=$(gh auth token) npm run desktop:release
 
 # 3. o APK do Android, para anexar na mesma release
-npm run mobile:apk
+cd apps/mobile && eas build --profile preview --platform android --local
 ```
 
 `npm run versao` sem argumento só confere se os quatro arquivos estão na mesma
@@ -255,78 +259,51 @@ Para gerar o instalador **sem** publicar: `npm run desktop:package` (sai em
 
 ## 📱 APK do Android
 
-O build é **local**, com o Gradle do projeto nativo. Não precisa de conta no Expo
-nem do EAS Build:
+O build sai pelo **EAS Build rodando local** — sem fila na nuvem, usando o JDK e
+o Android SDK da própria máquina:
 
 ```bash
-npm run mobile:apk     # -> apps/mobile/release/PlannerFofo-x.y.z.apk
+cd apps/mobile
+eas build --profile development --platform android --local
 ```
 
-O script roda o Gradle, confere com qual chave o APK saiu assinado e copia o
-arquivo já com o número da versão.
+Os perfis ficam em `apps/mobile/eas.json`:
+
+| Perfil | Para quê |
+| --- | --- |
+| `development` | APK com `expo-dev-client` — abre o dev menu e conecta no Metro |
+| `preview` | APK autônomo, com o bundle embutido, para instalar e testar |
+| `production` | `.aab`, formato que a Play Store exige |
+
+O `development` precisa do pacote `expo-dev-client`, que já está declarado nas
+dependências. O `versionCode` do Android é derivado da versão em
+`app.config.js` (1.0.1 → 10001), então anda sozinho junto com `npm run versao`.
 
 ### Assinatura
 
-O template do React Native assina o build de release com a **chave de debug** —
-a mesma chave pública que vem no SDK, igual na máquina de todo mundo. Um APK
-assim instala, mas qualquer pessoa consegue publicar uma "atualização" que o
-Android aceita como sendo do mesmo app.
+Quem cuida da chave é o **EAS**, não o repositório. Na primeira vez ele oferece
+gerar um keystore e guarda no seu projeto Expo; nas seguintes reutiliza o mesmo.
+Para ver ou baixar: `eas credentials`.
 
-Trocar isso à mão em `android/app/build.gradle` não resolve: a pasta `android/`
-é gerada pelo `expo prebuild` e está no `.gitignore`, então a edição some no
-próximo `--clean`. Por isso a troca mora num config plugin,
-`apps/mobile/plugins/assinatura-android.js`, que o Expo reaplica toda vez que
-regenera o projeto nativo.
-
-As credenciais **não** ficam no repositório. O Gradle as lê de
-`~/.gradle/gradle.properties`:
-
-```properties
-PLANNER_FOFO_KEYSTORE=/caminho/para/planner-fofo-release.p12
-PLANNER_FOFO_KEY_ALIAS=planner-fofo
-PLANNER_FOFO_KEYSTORE_PASSWORD=...
-PLANNER_FOFO_KEY_PASSWORD=...
-```
-
-Para criar a sua chave:
-
-```bash
-keytool -genkeypair -v -storetype PKCS12   -keystore planner-fofo-release.p12 -alias planner-fofo   -keyalg RSA -keysize 2048 -validity 10000
-```
-
-> ⚠️ **Guarde o arquivo `.p12` e a senha.** O Android só aceita atualizar um app
-> instalado se o APK novo vier assinado com a **mesma** chave. Perdeu a chave,
-> perdeu a possibilidade de atualizar — quem já tem o app precisa desinstalar e
-> instalar de novo, perdendo os dados locais.
-
-Sem essas propriedades o build cai de volta na chave de debug, de propósito:
-quem clonou só para mexer no código continua conseguindo compilar. O
-`npm run mobile:apk` avisa em letras grandes quando isso acontece.
+> ⚠️ O Android só aceita atualizar um app instalado se o APK novo vier assinado
+> com a **mesma** chave. Deixar o EAS guardar evita o risco de perder o keystore
+> — mas confira em `eas credentials` antes de distribuir para outras pessoas.
 
 ### Testar antes de publicar
 
-O build de debug pega o bundle do dev server e mantém os fallbacks de
-desenvolvimento ligados — ele **esconde** uma classe inteira de erro que só
-aparece no APK de release. Rode o APK no emulador antes de distribuir:
+O build de debug (`npx expo run:android`) pega o bundle do dev server e mantém
+os fallbacks de desenvolvimento ligados — ele **esconde** uma classe inteira de
+erro que só aparece no build de release. Rode o APK de verdade no emulador antes
+de distribuir:
 
 ```bash
-adb install -r apps/mobile/release/PlannerFofo-1.0.0.apk
+adb install -r <o-apk-que-o-eas-gerou>.apk
 adb logcat -b crash
 ```
 
 As armadilhas já encontradas (todas matavam o app no primeiro render) estão
 documentadas em `CLAUDE.md`: `ActivityIndicator` sob a New Architecture, a ordem
 do polyfill de `URL` e React Native duplicado no monorepo.
-
-### Atualização
-
-O Android não tem o equivalente ao `electron-updater`: um app fora de loja não
-pode se substituir sozinho. Dois caminhos, se isso virar necessidade:
-
-- **EAS Update** — atualiza o *bundle JS* pelo ar, sem loja. Cobre a maior parte
-  das mudanças (telas, regras, textos); não cobre dependência nativa nova.
-- **Checagem de versão** — o app compara a própria versão com a última release do
-  GitHub e abre o link do APK. Simples, mas a instalação continua manual.
 
 ---
 
@@ -340,7 +317,7 @@ pode se substituir sozinho. Dois caminhos, se isso virar necessidade:
 | `npm run desktop:release` | build + publica a release no GitHub |
 | `npm run mobile` | Expo dev server |
 | `npm run mobile:android` | `expo run:android` no workspace mobile |
-| `npm run mobile:apk` | APK de release assinado, em `apps/mobile/release` |
+| `eas build --profile development --platform android --local` | APK de dev, rodando em `apps/mobile` |
 | `npm run typecheck` | TypeScript em todos os workspaces |
 | `npm run check:db` | sanidade do backend com a chave pública (sai 1 se falhar) |
 | `npm run icones` | regenera os ícones dos dois apps (PNG procedural) |

@@ -83,5 +83,4 @@ console.log(`
 Agora gere os artefatos:
 
   GH_TOKEN=$(gh auth token) npm run desktop:release   instalador + latest.yml no GitHub
-  npm run mobile:apk                                  APK assinado, para anexar na release
 `);

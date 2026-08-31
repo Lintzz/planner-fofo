@@ -62,8 +62,10 @@ export interface Item {
   data: string;
 }
 
-/** Rascunho do modal de novo item. */
+/** Rascunho do modal de item: novo quando `id` e `null`, edicao quando nao. */
 export interface RascunhoItem {
+  /** `null` enquanto o item nao existe no banco. */
+  id: string | null;
   lista: ListaTipo;
   texto: string;
   tagId: string | null;

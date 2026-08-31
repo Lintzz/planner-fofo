@@ -82,6 +82,7 @@ export function Lista({ planner }: { planner: PlannerStore }) {
                   tag={item.tagId ? tagPorId.get(item.tagId) : undefined}
                   sufixo={grupo.data === hoje() ? '' : ` · ${grupo.rotulo}`}
                   aoAlternar={() => void planner.alternarItem(item.id)}
+                  aoEditar={() => planner.abrirEdicaoItem(item.id)}
                   aoRemover={() => void planner.excluirItem(item.id)}
                 />
               ))}
@@ -129,12 +130,14 @@ function LinhaItem({
   tag,
   sufixo,
   aoAlternar,
+  aoEditar,
   aoRemover,
 }: {
   item: Item;
   tag?: Tag;
   sufixo: string;
   aoAlternar: () => void;
+  aoEditar: () => void;
   aoRemover: () => void;
 }) {
   const p = paleta(tag?.cor);
@@ -174,6 +177,17 @@ function LinhaItem({
           {sufixo}
         </span>
       </div>
+
+      {/* No desktop não existe "segurar": o lápis é o equivalente do gesto
+          que o mobile usa para abrir o mesmo modal de edição. */}
+      <button
+        type="button"
+        className="item__editar"
+        onClick={aoEditar}
+        aria-label={`Editar ${item.texto}`}
+      >
+        ✎
+      </button>
 
       <button type="button" className="item__remover" onClick={aoRemover} aria-label="Remover item">
         ✕

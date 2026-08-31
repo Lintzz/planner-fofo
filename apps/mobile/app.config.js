@@ -85,12 +85,6 @@ module.exports = ({ config }) => {
       ...config.android,
       versionCode: versionCodeDe(config.version),
     },
-    plugins: [
-      ...(config.plugins ?? []),
-      // Assina o APK de release com a chave de verdade, e nao com a de debug
-      // que vem no template. Ver plugins/assinatura-android.js.
-      './plugins/assinatura-android',
-    ],
     extra: {
       ...config.extra,
       supabaseUrl,

@@ -27,11 +27,11 @@ npm run db:push             # aplica migrações no projeto linkado
 npm run db:types            # regenera packages/shared/src/database.types.ts
 ```
 
-Não há suíte de testes. A validação é: `check:db` → `typecheck` → build/bundle →
-app rodando. As skills `/testar-mobile` e `/testar-desktop` (em `.claude/skills/`)
-descrevem esse caminho em detalhe, incluindo os fluxos a exercitar em cada aba,
-os erros comuns e o procedimento de cadastro no Supabase hospedado — **leia a
-skill correspondente antes de rodar qualquer app**.
+Não há suíte de testes automatizados, e **o teste do app é manual, feito pela
+usuária**. A validação é: `check:db` → `typecheck` → build/bundle → app rodando.
+As skills `/testar-mobile` e `/testar-desktop` (em `.claude/skills/`) só sobem o
+app (emulador Android e janela do Electron) e devolvem o controle — não navegue
+pelas telas nem exercite fluxos por conta própria.
 
 `npm run desktop` e `expo run:android` prendem o terminal: rode em background.
 
@@ -82,8 +82,8 @@ mudança de regra feita só num app é bug — os números vão divergir.
 
 O `shared` **nunca é compilado**: `main`/`types` apontam para `src/index.ts` e
 cada app transpila o TypeScript junto (alias no `electron.vite.config.ts`,
-`watchFolders` no `metro.config.js`, `paths` + `include` nos tsconfigs). O script
-`shared:build` da raiz é vestigial — não existe `build` no pacote.
+`watchFolders` no `metro.config.js`, `paths` + `include` nos tsconfigs). O pacote
+só tem `typecheck` — não crie um `build` nem um script que o chame.
 
 ### Ambiente: o ponto que mais quebra
 
@@ -122,9 +122,32 @@ que erra o `usuario_id` falha com `new row violates row-level security policy`.
 O MCP `supabase` está configurado em `.mcp.json` (`apply_migration`,
 `execute_sql`, `query_logs`).
 
-⚠️ **Nunca crie usuária com `INSERT` em `auth.users`** — colunas de token com
-`NULL` quebram o signup do projeto inteiro (`500`, `Database error finding user`).
-Detalhes e recuperação nas skills de teste. Apagar por SQL é seguro.
+⚠️ **Nunca crie usuária com `INSERT` em `auth.users`.** As colunas de token
+(`confirmation_token`, `recovery_token`, `email_change`, `email_change_token_new`)
+aceitam `NULL`, mas o GoTrue as lê como `string` não-nula em Go: uma linha com
+`NULL` ali quebra o signup do projeto inteiro — todo cadastro passa a devolver
+`500` e a tela mostra `Database error finding user`. Crie conta pela tela de
+cadastro do app, pelo dashboard (Authentication → Add user) ou pela Admin API;
+esses caminhos preenchem com `''`. **Apagar** por SQL é seguro.
+
+Se o erro já apareceu, ache e apague as linhas quebradas (o cascade leva perfil,
+hábitos, registros e tags):
+
+```sql
+select id, email from auth.users where confirmation_token is null;
+```
+
+Para ver o erro cru: MCP `query_logs` na fonte `auth_logs` filtrando
+`log_attributes['path'] = '/signup'`. Voltou ao normal quando um login com
+e-mail inexistente devolve `400 invalid_credentials` em vez de `500`.
+
+A confirmação de e-mail vem **ligada** no projeto hospedado, então o cadastro
+cria a conta mas não devolve sessão e o app volta para o login. Solução de uma
+vez só (não dá por SQL nem pelo MCP — a config é do ambiente do GoTrue):
+Dashboard → **Authentication** → **Sign In / Providers** → **Email** → desligar
+**Confirm email**. Enquanto isso, confirmar na mão é seguro (é `UPDATE` em linha
+existente): `update auth.users set email_confirmed_at = now() where
+email_confirmed_at is null;`
 
 ### Diferenças de plataforma que são intencionais
 
@@ -140,20 +163,47 @@ Detalhes e recuperação nas skills de teste. Apagar por SQL é seguro.
 
 ## APK do Android
 
-`npm run mobile:apk` roda o Gradle local (`apps/mobile/android`) — nao usa EAS
-nem exige conta no Expo. Duas coisas que ja custaram um build quebrado:
+O APK sai pelo **EAS Build rodando local**, a partir de `apps/mobile`:
 
-- **Assinatura.** O template do React Native assina o release com a chave de
-  *debug*. A troca mora no config plugin
-  `apps/mobile/plugins/assinatura-android.js`, porque `android/` e regenerada
-  pelo `expo prebuild` e qualquer edicao direta no `build.gradle` some. As
-  credenciais ficam em `~/.gradle/gradle.properties`, fora do repositorio.
-- **`unstable_serverRoot` no `metro.config.js`.** O `expo/metro-config` sobe o
+```bash
+cd apps/mobile
+eas build --profile development --platform android --local
+```
+
+Perfis em `apps/mobile/eas.json`: `development` (com `expo-dev-client`),
+`preview` (APK autonomo) e `production` (`.aab`). A assinatura e gerenciada pelo
+EAS (`eas credentials`) — nao ha keystore nem config plugin no repositorio.
+
+O build local do EAS roda o proprio `expo prebuild`, entao `apps/mobile/android/`
+(gitignorada) nao entra no pacote; ela existe so para o `npx expo run:android`.
+
+**O mobile nao tem atualizacao automatica, de proposito.** Nao existe
+`expo-updates` nas dependencias, nem bloco `updates`/`runtimeVersion` na config,
+e o `AndroidManifest` sai com `expo.modules.updates.ENABLED=false`. Atualizar =
+gerar um APK novo e instalar por cima. Nao instale `expo-updates` "so para
+testar": ele liga OTA e passa a exigir `runtimeVersion` coerente entre builds.
+A atualizacao automatica existe **so no desktop** (`electron-updater`, ver
+"Distribuicao do desktop").
+
+Uma coisa que ja custou um build quebrado, e que precisa das **duas** metades
+que estao no `metro.config.js` — mexer em so uma quebra o outro modo:
+
+- **`unstable_serverRoot`** conserta o *release*. O `expo/metro-config` sobe o
   serverRoot para a raiz do monorepo; o plugin Gradle passa
   `export:embed --entry-file index.js` **relativo**, com working directory em
   `apps/mobile`. Sem fixar o serverRoot no proprio app, o bundle de release
-  falha com `None of these files exist: ..\..\index.js`. O modo debug nunca
-  mostra isso, porque o bundle vem do dev server.
+  falha com `None of these files exist: ..\..\index.js`.
+- **`EXPO_NO_METRO_WORKSPACE_ROOT=1`** conserta o *debug*, e por isso o arquivo
+  seta essa variavel antes de carregar o `expo/metro-config`. O Expo CLI nao le
+  o `unstable_serverRoot`: ele decide a raiz sozinho em `getMetroServerRoot()`
+  (`@expo/config/build/paths/paths.js`), que so olha essa variavel. Com so o
+  pin, o manifesto do dev server anuncia `apps/mobile/index.bundle` enquanto o
+  Metro serve com raiz em `apps/mobile`, e o dev-client abre na tela de erro com
+  `Unable to resolve module ./apps/mobile/index` (ele procura
+  `apps/mobile/apps/mobile/index`).
+
+A variavel nao substitui o pin: no `export:embed` ela chega tarde demais, porque
+o entry ja foi resolvido quando o `metro.config.js` carrega.
 
 ### Bugs que SO aparecem no build de release
 
@@ -187,8 +237,8 @@ ja apareceram, todos com o app morrendo no primeiro render:
 ## Armadilhas
 
 - Comandos do Expo rodam em `apps/mobile`. Rodar `expo run:android` na raiz gera
-  um projeto nativo em `android/` na raiz (que o `.gitignore` não cobre — só
-  `apps/mobile/android/`).
+  um projeto nativo em `android/` (e um `app.json`) na raiz — lixo que o
+  `.gitignore` já cobre, mas que não deveria existir.
 - Só mude JS/TS? Fast Refresh basta. Refaça o build nativo apenas ao mexer em
   `app.json`, dependências nativas ou Gradle.
 - Erros de rede/RLS do `usePlanner` saem em `console.warn` com o prefixo

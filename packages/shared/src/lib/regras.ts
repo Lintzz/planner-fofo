@@ -16,6 +16,7 @@ import type {
   Periodo,
   PontoGrafico,
   RascunhoHabito,
+  RascunhoItem,
 } from '../types';
 import { deIso, diasAtras, indiceDia, rotuloData } from './datas';
 
@@ -172,6 +173,17 @@ export function agruparPorData(itens: Item[]): GrupoDeItens[] {
   });
 }
 
+/** Rascunho preenchido a partir de um item existente, para editar. */
+export function rascunhoItemDe(item: Item): RascunhoItem {
+  return {
+    id: item.id,
+    lista: item.lista,
+    texto: item.texto,
+    tagId: item.tagId,
+    data: item.data,
+  };
+}
+
 /** Rodape da lista, que muda conforme o escopo. */
 export function rodapeDaLista(
   visiveis: Item[],
@@ -194,10 +206,12 @@ export function textosDaLista(ehEstudos: boolean) {
     avisoEmoji: ehEstudos ? '📖' : '🫧',
     rotuloBotao: ehEstudos ? 'Novo conteúdo' : 'Nova tarefa',
     tituloModal: ehEstudos ? 'Novo conteúdo de estudo' : 'Nova tarefa avulsa',
+    tituloModalEdicao: ehEstudos ? 'Editar conteúdo de estudo' : 'Editar tarefa avulsa',
     rotuloCampo: ehEstudos ? 'O que estudar' : 'O que fazer',
     placeholder: ehEstudos ? 'Ex: capítulo 4 — distribuições' : 'Ex: lavar a roupa de cama',
     rotuloTags: ehEstudos ? 'Matéria' : 'Categoria',
     rotuloSalvar: ehEstudos ? 'Adicionar ao dia 📚' : 'Adicionar 💗',
+    rotuloSalvarEdicao: 'Salvar alterações 💜',
     vazioHoje: 'Nada anotado pra hoje ainda ✨',
     vazioFiltro: 'Nada por aqui com esse filtro',
   };

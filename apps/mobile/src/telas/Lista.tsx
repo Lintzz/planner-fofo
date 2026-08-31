@@ -94,6 +94,7 @@ export function Lista({ planner }: { planner: PlannerStore }) {
                 mostrarData={grupo.data !== hoje()}
                 rotuloData={grupo.rotulo}
                 aoAlternar={() => void planner.alternarItem(item.id)}
+                aoEditar={() => planner.abrirEdicaoItem(item.id)}
                 aoRemover={() => void planner.excluirItem(item.id)}
               />
             ))}
@@ -103,7 +104,10 @@ export function Lista({ planner }: { planner: PlannerStore }) {
 
       {itensVisiveis.length === 0 ? (
         <Vazio texto={estadoLista.escopo === 'hoje' ? textos.vazioHoje : textos.vazioFiltro} />
-      ) : null}
+      ) : (
+        // O gesto não tem ícone que o anuncie, então a dica faz esse papel.
+        <Text style={estilos.dica}>segure um item pra editar ✏️</Text>
+      )}
 
       <Text style={estilos.rodape}>
         {rodapeDaLista(itensVisiveis, estadoLista.escopo, ehEstudos)}
@@ -142,12 +146,17 @@ function PainelDaTag({
   );
 }
 
+/**
+ * Uma linha da lista. Editar é segurar a linha: o item já tem caixa e ✕, e um
+ * terceiro botão deixaria a linha apertada demais no celular.
+ */
 function LinhaItem({
   item,
   tag,
   mostrarData,
   rotuloData,
   aoAlternar,
+  aoEditar,
   aoRemover,
 }: {
   item: Item;
@@ -155,20 +164,25 @@ function LinhaItem({
   mostrarData: boolean;
   rotuloData: string;
   aoAlternar: () => void;
+  aoEditar: () => void;
   aoRemover: () => void;
 }) {
   const p = paleta(tag?.cor);
   const rodape = `${tag?.nome ?? 'Sem tag'}${mostrarData ? ` · ${rotuloData}` : ''}`;
 
   return (
-    <View
-      style={[
+    <Pressable
+      onLongPress={aoEditar}
+      accessibilityLabel={`Editar ${item.texto}`}
+      accessibilityHint="Segure para editar"
+      style={({ pressed }) => [
         estilos.item,
         {
           backgroundColor: item.feito ? CORES.feitoBg : p.bg,
           borderColor: item.feito ? CORES.feitoBorda : p.borda,
         },
         sombra('suave'),
+        pressed && estilos.itemPressionado,
       ]}
     >
       <Pressable
@@ -201,7 +215,7 @@ function LinhaItem({
       <Pressable onPress={aoRemover} hitSlop={8} accessibilityLabel="Remover item">
         <Text style={estilos.remover}>✕</Text>
       </Pressable>
-    </View>
+    </Pressable>
   );
 }
 
@@ -272,7 +286,15 @@ const estilos = StyleSheet.create({
   itemTextos: { flex: 1, gap: 2, minWidth: 0 },
   itemTexto: { fontFamily: F.nunito, fontSize: 13.5, lineHeight: 17.5 },
   itemRodape: { fontFamily: F.nunitoExtra, fontSize: 10, letterSpacing: 0.5 },
+  itemPressionado: { opacity: 0.7 },
   remover: { color: CORES.remover, fontSize: 15, padding: 4 },
+
+  dica: {
+    textAlign: 'center',
+    fontFamily: F.nunito,
+    fontSize: 11,
+    color: CORES.apoio,
+  },
 
   rodape: {
     textAlign: 'center',

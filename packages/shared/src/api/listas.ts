@@ -119,6 +119,29 @@ export async function criarItem(
   return itemDaLinha(data);
 }
 
+/**
+ * Regrava texto, tag e dia de um item existente. Devolve `null` quando o texto
+ * esta vazio — mesma regra do `criarItem`.
+ */
+export async function atualizarItem(
+  cliente: ClientePlanner,
+  id: string,
+  rascunho: RascunhoItem,
+): Promise<Item | null> {
+  const texto = rascunho.texto.trim();
+  if (!texto) return null;
+
+  const { data, error } = await cliente
+    .from('itens')
+    .update({ texto, tag_id: rascunho.tagId, data: rascunho.data || hoje() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return itemDaLinha(data);
+}
+
 /** Marca ou desmarca um item. */
 export async function alternarItem(
   cliente: ClientePlanner,

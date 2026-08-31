@@ -18,6 +18,7 @@ import {
 } from '../api/habitos';
 import {
   alternarItem as apiAlternarItem,
+  atualizarItem as apiAtualizarItem,
   criarItem as apiCriarItem,
   criarTag as apiCriarTag,
   excluirItem as apiExcluirItem,
@@ -47,6 +48,7 @@ import {
   filtrarItens,
   porcentagemDoDia,
   rascunhoDe,
+  rascunhoItemDe,
   rascunhoNovo,
 } from '../lib/regras';
 
@@ -275,12 +277,21 @@ export function usePlanner(cliente: ClientePlanner) {
 
   const abrirNovoItem = useCallback(() => {
     setRascunhoItem({
+      id: null,
       lista: listaAtual,
       texto: '',
       tagId: estadoLista.filtroTagId ?? estadoLista.tags[0]?.id ?? null,
       data: hoje(),
     });
   }, [listaAtual, estadoLista]);
+
+  const abrirEdicaoItem = useCallback(
+    (id: string) => {
+      const alvo = estadoLista.itens.find((i) => i.id === id);
+      if (alvo) setRascunhoItem(rascunhoItemDe(alvo));
+    },
+    [estadoLista],
+  );
 
   const fecharRascunhoItem = useCallback(() => setRascunhoItem(null), []);
   const mudarRascunhoItem = useCallback(
@@ -289,12 +300,22 @@ export function usePlanner(cliente: ClientePlanner) {
     [],
   );
 
+  /** Mesmo botao para os dois modos: com `id`, regrava; sem `id`, cria. */
   const salvarItem = useCallback(async () => {
     if (!rascunhoItem) return;
+    const { id, lista } = rascunhoItem;
     try {
-      const criado = await apiCriarItem(cliente, rascunhoItem);
-      if (!criado) return;
-      mudarLista(rascunhoItem.lista, { itens: [criado, ...listas[rascunhoItem.lista].itens] });
+      if (id) {
+        const atualizado = await apiAtualizarItem(cliente, id, rascunhoItem);
+        if (!atualizado) return;
+        mudarLista(lista, {
+          itens: listas[lista].itens.map((i) => (i.id === id ? atualizado : i)),
+        });
+      } else {
+        const criado = await apiCriarItem(cliente, rascunhoItem);
+        if (!criado) return;
+        mudarLista(lista, { itens: [criado, ...listas[lista].itens] });
+      }
       setRascunhoItem(null);
     } catch (e) {
       setErro(mensagemDeErro(e));
@@ -323,6 +344,8 @@ export function usePlanner(cliente: ClientePlanner) {
     async (id: string) => {
       const lista = listaAtual;
       const antes = listas[lista].itens;
+      // Se o item apagado for o que esta aberto no modal, o modal fecha junto.
+      setRascunhoItem((atual) => (atual?.id === id ? null : atual));
       mudarLista(lista, { itens: antes.filter((i) => i.id !== id) });
       try {
         await apiExcluirItem(cliente, id);
@@ -437,6 +460,7 @@ export function usePlanner(cliente: ClientePlanner) {
     definirFiltro,
     rascunhoItem,
     abrirNovoItem,
+    abrirEdicaoItem,
     fecharRascunhoItem,
     mudarRascunhoItem,
     salvarItem,

@@ -65,6 +65,11 @@ export function Hoje({ planner }: { planner: PlannerStore }) {
           />
         ))}
       </View>
+
+      {/* O gesto não tem ícone que o anuncie, então a dica faz esse papel. */}
+      {emOrdem.length ? (
+        <Text style={estilos.dica}>segure um hábito pra editar ✏️</Text>
+      ) : null}
     </View>
   );
 }
@@ -117,4 +122,5 @@ const estilos = StyleSheet.create({
   botaoNovoTexto: { fontSize: 12.5, color: CORES.abaAtiva, fontFamily: F.baloo },
 
   lista: { gap: 13 },
+  dica: { textAlign: 'center', fontFamily: F.nunito, fontSize: 11, color: CORES.apoio },
 });

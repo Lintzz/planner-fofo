@@ -748,6 +748,17 @@ button {
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
+.item__editar {
+  border: none;
+  background: transparent;
+  color: var(--apoio);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+}
+.item__editar:hover {
+  color: var(--fechar);
+}
 .item__remover {
   border: none;
   background: transparent;
