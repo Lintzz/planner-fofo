@@ -35,6 +35,31 @@ skill correspondente antes de rodar qualquer app**.
 
 `npm run desktop` e `expo run:android` prendem o terminal: rode em background.
 
+## Distribuicao do desktop
+
+O app instalado se atualiza sozinho pelas releases de `Lintzz/planner-fofo`:
+`src/main/atualizador.ts` usa `electron-updater` para ler o `latest.yml` da
+release mais recente, baixar em segundo plano e oferecer o reinicio. So roda com
+`app.isPackaged` — em dev fica desligado de proposito.
+
+```bash
+npm run desktop:package                        # instalador local, sem publicar
+npm version 1.1.0 --workspace @planner-fofo/desktop --no-git-tag-version
+GH_TOKEN=$(gh auth token) npm run desktop:release   # build + release no GitHub
+```
+
+Regras que ja custaram tempo:
+
+- A versao do `electron` em `apps/desktop/package.json` fica **presa** (sem `^`).
+  O electron-builder roda em `apps/desktop`, mas o `electron` esta hoisted no
+  `node_modules` da raiz; com faixa de versao ele falha com "Cannot compute
+  electron version".
+- O `artifactName` nao pode ter espaco: o GitHub troca espaco por ponto no nome
+  do asset e o `latest.yml` deixa de casar com a URL de download.
+- O NSIS e `perMachine: false` para a atualizacao se instalar sem UAC.
+- Uma release so serve para atualizar se tiver os tres arquivos: o `.exe`, o
+  `.blockmap` e o `latest.yml`.
+
 ## Arquitetura
 
 Monorepo npm workspaces com dois apps e um núcleo compartilhado:
