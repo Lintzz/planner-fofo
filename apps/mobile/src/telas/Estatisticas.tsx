@@ -1,6 +1,6 @@
 /** Aba "Suas conquistas": números, gráfico do período, consistência e medalhas. */
 import React, { useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import {
   GRADIENTES,
   corDaBarra,
@@ -15,6 +15,7 @@ import {
 } from '@planner-fofo/shared';
 import { CORES, F, paleta, sombra } from '../tema';
 import { Gradiente, Segmentado } from '../componentes/Base';
+import Rodinha from '../componentes/Rodinha';
 
 const PERIODOS: readonly Periodo[] = ['Semana', 'Mês', 'Ano'] as const;
 const ALTURA_GRAFICO = 150;
@@ -37,7 +38,7 @@ export function Estatisticas({ planner }: { planner: PlannerStore }) {
   if (!estatisticas) {
     return (
       <View style={estilos.carregando}>
-        <ActivityIndicator color="#c98af0" />
+        <Rodinha cor="#c98af0" />
         <Text style={estilos.carregandoTexto}>Somando suas conquistas…</Text>
       </View>
     );

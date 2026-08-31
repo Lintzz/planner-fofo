@@ -1,7 +1,6 @@
 /** Entrada e cadastro. Mesma linguagem visual do resto do app. */
 import React, { useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,6 +15,7 @@ import { GRADIENTES, cadastrar, entrar } from '@planner-fofo/shared';
 import { obterSupabase } from '../lib/supabase';
 import { CORES, F, sombra } from '../tema';
 import { Gradiente, RotuloCampo } from '../componentes/Base';
+import Rodinha from '../componentes/Rodinha';
 
 export function Login() {
   const supabase = useMemo(() => obterSupabase(), []);
@@ -121,7 +121,7 @@ export function Login() {
               style={[estilos.botao, sombra('media', '#b450b4'), ocupado && estilos.ocupado]}
             >
               {ocupado ? (
-                <ActivityIndicator color="#fff" />
+                <Rodinha cor="#fff" />
               ) : (
                 <Text style={estilos.botaoTexto}>
                   {ehCadastro ? 'Criar minha conta 💗' : 'Entrar 🌷'}

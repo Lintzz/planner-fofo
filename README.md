@@ -296,6 +296,21 @@ Sem essas propriedades o build cai de volta na chave de debug, de propósito:
 quem clonou só para mexer no código continua conseguindo compilar. O
 `npm run mobile:apk` avisa em letras grandes quando isso acontece.
 
+### Testar antes de publicar
+
+O build de debug pega o bundle do dev server e mantém os fallbacks de
+desenvolvimento ligados — ele **esconde** uma classe inteira de erro que só
+aparece no APK de release. Rode o APK no emulador antes de distribuir:
+
+```bash
+adb install -r apps/mobile/release/PlannerFofo-1.0.0.apk
+adb logcat -b crash
+```
+
+As armadilhas já encontradas (todas matavam o app no primeiro render) estão
+documentadas em `CLAUDE.md`: `ActivityIndicator` sob a New Architecture, a ordem
+do polyfill de `URL` e React Native duplicado no monorepo.
+
 ### Atualização
 
 O Android não tem o equivalente ao `electron-updater`: um app fora de loja não

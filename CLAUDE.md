@@ -149,6 +149,35 @@ nem exige conta no Expo. Duas coisas que ja custaram um build quebrado:
   falha com `None of these files exist: ..\..\index.js`. O modo debug nunca
   mostra isso, porque o bundle vem do dev server.
 
+### Bugs que SO aparecem no build de release
+
+O debug pega o bundle do dev server e tem os fallbacks de desenvolvimento
+ligados, entao esconde uma classe inteira de erro. **Rodar bem em debug nao diz
+nada sobre o release** — teste o APK no emulador antes de publicar. Os tres que
+ja apareceram, todos com o app morrendo no primeiro render:
+
+1. **`ActivityIndicator`** → `View config getter callback for component
+   `AndroidProgressBar` must be a function`. No Android ele renderiza o
+   `AndroidProgressBar`, que e `specs_DEPRECATED` e a New Architecture nao
+   registra. Trocado por `src/componentes/Rodinha.tsx` (uma borda girando, sem
+   componente nativo). **Nao volte a usar `ActivityIndicator` aqui.**
+
+2. **Polyfill de `URL`** → `Cannot assign to property 'protocol' which has only
+   a getter`, vindo do `supabase-js`. O RN reinstala o proprio `URL` **durante o
+   `runApplication`** (`polyfillGlobal` <- `setUpDefaltReactNativeEnvironment`),
+   depois de todo modulo de entry ter rodado, e como getter preguicoso. Por isso
+   `import 'react-native-url-polyfill/auto'` no topo de qualquer modulo — o
+   `index.js` inclusive — perde a corrida. A chamada mora dentro de
+   `obterSupabase()`, em `src/lib/supabase.ts`, para ser a ultima a escrever.
+
+3. **React Native duplicado** → `View config getter callback for component
+   `RCTText` must be a function`. A raiz declarava `expo`/`react`/`react-native`
+   (resto de um `expo run:android` rodado na raiz) numa versao diferente da de
+   `apps/mobile`, entao o npm nao deduplicava: o codigo do app resolvia uma
+   copia e os pacotes `expo-*` a outra, com registros de view config separados.
+   **So pode existir um `react-native` no monorepo** — confira com
+   `npm ls react-native` antes de investigar qualquer erro de view config.
+
 ## Armadilhas
 
 - Comandos do Expo rodam em `apps/mobile`. Rodar `expo run:android` na raiz gera

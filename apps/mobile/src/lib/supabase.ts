@@ -12,7 +12,7 @@
  * durante o `import` — antes de qualquer React rodar, virando red box em vez
  * da tela "Falta configurar o Supabase".
  */
-import 'react-native-url-polyfill/auto';
+import { setupURLPolyfill } from 'react-native-url-polyfill';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
@@ -35,6 +35,27 @@ let instancia: ClientePlanner | null = null;
 /** Cliente singleton. Só chame depois de `ambienteConfigurado()`. */
 export function obterSupabase(): ClientePlanner {
   if (instancia) return instancia;
+
+  // O polyfill de URL tem de ser instalado AQUI, e nao no topo do modulo.
+  //
+  // O `supabase-js` faz `realtimeUrl.protocol = ...` ao montar o cliente, e o
+  // `URL` que vem no React Native so tem getter de `protocol`. O polyfill
+  // resolve — mas so se for o ultimo a falar.
+  //
+  // O problema e que o RN reinstala o proprio `URL` **durante o
+  // `runApplication`**, depois de todo modulo de entry ja ter rodado
+  // (`polyfillGlobal` <- `setUpDefaltReactNativeEnvironment`), e ainda por cima
+  // como getter preguicoso: o valor real so materializa no primeiro acesso.
+  // Resultado: `import 'react-native-url-polyfill/auto'` no topo de qualquer
+  // modulo — inclusive do index.js — e sobrescrito depois, e o app morre no
+  // primeiro render com:
+  //
+  //     TypeError: Cannot assign to property 'protocol' which has only a getter
+  //
+  // Isso so acontece no build de release; em debug o bundle e montado de outro
+  // jeito e o erro nao aparece. Chamando aqui, ja dentro do render, o polyfill
+  // fica sendo o ultimo a escrever — e nada depois dele mexe no global.
+  setupURLPolyfill();
 
   instancia = obterCliente({
     storage: AsyncStorage,

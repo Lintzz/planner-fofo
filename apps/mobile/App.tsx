@@ -7,7 +7,6 @@
  */
 import React, { useEffect, useMemo } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,6 +16,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import Rodinha from './src/componentes/Rodinha';
 import { useFonts } from 'expo-font';
 import {
   Baloo2_600SemiBold,
@@ -195,7 +195,7 @@ function Conteudo() {
 function Carregando() {
   return (
     <View style={estilos.centro}>
-      <ActivityIndicator color="#c98af0" />
+      <Rodinha cor="#c98af0" />
     </View>
   );
 }
