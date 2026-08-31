@@ -163,19 +163,33 @@ email_confirmed_at is null;`
 
 ## APK do Android
 
-O APK sai pelo **EAS Build rodando local**, a partir de `apps/mobile`:
+O APK sai do **Gradle local**, em duas etapas, a partir de `apps/mobile`:
 
 ```bash
-cd apps/mobile
-eas build --profile development --platform android --local
+npx expo prebuild --platform android --clean
+cd android && ./gradlew.bat assembleRelease     # ./gradlew fora do Windows
 ```
 
-Perfis em `apps/mobile/eas.json`: `development` (com `expo-dev-client`),
-`preview` (APK autonomo) e `production` (`.aab`). A assinatura e gerenciada pelo
-EAS (`eas credentials`) — nao ha keystore nem config plugin no repositorio.
+Sai em `android/app/build/outputs/apk/release/app-release.apk`. A skill
+`/publicar-apk` cobre o resto (versao, commit, conferencia e release).
 
-O build local do EAS roda o proprio `expo prebuild`, entao `apps/mobile/android/`
-(gitignorada) nao entra no pacote; ela existe so para o `npx expo run:android`.
+`eas build --local` **nao roda no Windows** — morre com "Unsupported platform,
+macOS or Linux is required to build apps for Android". O `eas.json` e o
+`credentials.json` (fora do git) sobraram para um build na nuvem
+(`eas build --platform android`, sem `--local`), que e o unico modo do EAS que
+funciona daqui e que nunca foi usado neste projeto.
+
+A assinatura vem de `apps/mobile/plugins/assinatura-android.js`, um config
+plugin que troca a chave de debug do template pela de verdade durante o
+`prebuild`. As credenciais moram em `~/.gradle/gradle.properties`
+(`PLANNER_FOFO_KEYSTORE` e as tres senhas), nunca no repositorio. **Sem essas
+propriedades o build nao falha:** volta para a chave de debug de proposito, para
+quem clonou conseguir compilar. Um APK assim nao instala por cima do anterior,
+entao confira o fingerprint antes de publicar — `apksigner verify --print-certs`
+tem que dar `a8d3775d...`, o mesmo desde o 1.0.0.
+
+`apps/mobile/android/` e gitignorada e o `--clean` a regenera do zero; sem ele o
+build pode aproveitar um `app/build.gradle` de um estado antigo.
 
 **O mobile nao tem atualizacao automatica, de proposito.** Nao existe
 `expo-updates` nas dependencias, nem bloco `updates`/`runtimeVersion` na config,

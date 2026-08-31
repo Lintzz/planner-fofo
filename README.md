@@ -242,7 +242,8 @@ npm run versao 1.1.0
 GH_TOKEN=$(gh auth token) npm run desktop:release
 
 # 3. o APK do Android, para anexar na mesma release
-cd apps/mobile && eas build --profile preview --platform android --local
+cd apps/mobile && npx expo prebuild --platform android --clean
+cd android && ./gradlew.bat assembleRelease
 ```
 
 `npm run versao` sem argumento só confere se os quatro arquivos estão na mesma
@@ -259,35 +260,60 @@ Para gerar o instalador **sem** publicar: `npm run desktop:package` (sai em
 
 ## 📱 APK do Android
 
-O build sai pelo **EAS Build rodando local** — sem fila na nuvem, usando o JDK e
-o Android SDK da própria máquina:
+O build sai do **Gradle da própria máquina** — sem fila na nuvem, usando o JDK e
+o Android SDK que já estão instalados:
 
 ```bash
 cd apps/mobile
-eas build --profile development --platform android --local
+npx expo prebuild --platform android --clean
+cd android && ./gradlew.bat assembleRelease     # ./gradlew fora do Windows
 ```
 
-Os perfis ficam em `apps/mobile/eas.json`:
+O APK aparece em `apps/mobile/android/app/build/outputs/apk/release/`. O
+`--clean` regenera `android/` do zero: a pasta é gitignorada mas sobrevive entre
+builds, e sem isso dá para compilar em cima de um estado antigo.
 
-| Perfil | Para quê |
-| --- | --- |
-| `development` | APK com `expo-dev-client` — abre o dev menu e conecta no Metro |
-| `preview` | APK autônomo, com o bundle embutido, para instalar e testar |
-| `production` | `.aab`, formato que a Play Store exige |
+Para um APK de desenvolvimento, com dev menu e conectado ao Metro, o caminho é
+outro: `npx expo run:android`.
 
-O `development` precisa do pacote `expo-dev-client`, que já está declarado nas
-dependências. O `versionCode` do Android é derivado da versão em
-`app.config.js` (1.0.1 → 10001), então anda sozinho junto com `npm run versao`.
+> `eas build --local` **não roda no Windows** — sai com "Unsupported platform,
+> macOS or Linux is required to build apps for Android". O `eas.json` e o
+> `credentials.json` (fora do git) continuam configurados para um build na
+> nuvem, `eas build --profile preview --platform android`, que é o único modo do
+> EAS que funciona daqui.
+
+O `versionCode` do Android é derivado da versão em `app.config.js`
+(1.0.1 → 10001), então anda sozinho junto com `npm run versao`.
 
 ### Assinatura
 
-Quem cuida da chave é o **EAS**, não o repositório. Na primeira vez ele oferece
-gerar um keystore e guarda no seu projeto Expo; nas seguintes reutiliza o mesmo.
-Para ver ou baixar: `eas credentials`.
+A chave é um keystore **local**, fora do repositório, e o config plugin
+`apps/mobile/plugins/assinatura-android.js` a coloca no build de release durante
+o `prebuild` — o template do React Native assinaria com a chave de debug, que é
+pública e igual na máquina de todo mundo.
+
+O Gradle lê as credenciais de `~/.gradle/gradle.properties`:
+
+```properties
+PLANNER_FOFO_KEYSTORE=C:/Users/<voce>/.keystores/planner-fofo-release.p12
+PLANNER_FOFO_KEY_ALIAS=planner-fofo
+PLANNER_FOFO_KEYSTORE_PASSWORD=...
+PLANNER_FOFO_KEY_PASSWORD=...
+```
+
+Sem essas propriedades o plugin volta para a chave de debug de propósito, para
+quem clonou o projeto conseguir compilar sem ter a chave de ninguém.
 
 > ⚠️ O Android só aceita atualizar um app instalado se o APK novo vier assinado
-> com a **mesma** chave. Deixar o EAS guardar evita o risco de perder o keystore
-> — mas confira em `eas credentials` antes de distribuir para outras pessoas.
+> com a **mesma** chave — e um APK assinado errado sai calado, sem erro nenhum.
+> Confira antes de distribuir:
+> `apksigner verify --print-certs <apk>` tem que dar o mesmo fingerprint do APK
+> da última release. Para saber qual chave o Gradle vai usar antes de gastar um
+> build: `./gradlew :app:signingReport`.
+>
+> Perder esse `.p12` significa não conseguir mais atualizar ninguém que já tem o
+> app: quem for instalar a versão nova teria que desinstalar antes. Guarde uma
+> cópia fora da máquina.
 
 ### Testar antes de publicar
 
@@ -297,7 +323,7 @@ erro que só aparece no build de release. Rode o APK de verdade no emulador ante
 de distribuir:
 
 ```bash
-adb install -r <o-apk-que-o-eas-gerou>.apk
+adb install android/app/build/outputs/apk/release/app-release.apk
 adb logcat -b crash
 ```
 
@@ -317,7 +343,7 @@ do polyfill de `URL` e React Native duplicado no monorepo.
 | `npm run desktop:release` | build + publica a release no GitHub |
 | `npm run mobile` | Expo dev server |
 | `npm run mobile:android` | `expo run:android` no workspace mobile |
-| `eas build --profile development --platform android --local` | APK de dev, rodando em `apps/mobile` |
+| `./gradlew assembleRelease` | APK de release, em `apps/mobile/android` (depois do `expo prebuild`) |
 | `npm run typecheck` | TypeScript em todos os workspaces |
 | `npm run check:db` | sanidade do backend com a chave pública (sai 1 se falhar) |
 | `npm run icones` | regenera os ícones dos dois apps (PNG procedural) |
