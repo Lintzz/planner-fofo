@@ -38,6 +38,9 @@ build/
 *.p12
 *.keystore
 keystore.properties
+# Credenciais locais do EAS (`credentialsSource: local`) — tem a senha do keystore
+credentials.json
+apps/*/credentials.json
 # Builds locais do EAS (`eas build --local`)
 apps/mobile/*.apk
 apps/mobile/*.aab

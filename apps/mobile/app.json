@@ -29,8 +29,11 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "eas": {}
+      "eas": {
+        "projectId": "6d4c9618-5a0e-42eb-9dec-b40bf58e1ad7"
+      }
     },
-    "icon": "./assets/icone.png"
+    "icon": "./assets/icone.png",
+    "owner": "alexandre_lintz"
   }
 }
