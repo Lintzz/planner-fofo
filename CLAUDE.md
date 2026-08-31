@@ -132,6 +132,23 @@ Detalhes e recuperação nas skills de teste. Apagar por SQL é seguro.
 - `apps/mobile/src/tema.ts` reexporta os tokens do `shared` e acrescenta só o que
   é do RN (nomes de fonte do `expo-font`, sombras traduzidas de `box-shadow`).
 
+## APK do Android
+
+`npm run mobile:apk` roda o Gradle local (`apps/mobile/android`) — nao usa EAS
+nem exige conta no Expo. Duas coisas que ja custaram um build quebrado:
+
+- **Assinatura.** O template do React Native assina o release com a chave de
+  *debug*. A troca mora no config plugin
+  `apps/mobile/plugins/assinatura-android.js`, porque `android/` e regenerada
+  pelo `expo prebuild` e qualquer edicao direta no `build.gradle` some. As
+  credenciais ficam em `~/.gradle/gradle.properties`, fora do repositorio.
+- **`unstable_serverRoot` no `metro.config.js`.** O `expo/metro-config` sobe o
+  serverRoot para a raiz do monorepo; o plugin Gradle passa
+  `export:embed --entry-file index.js` **relativo**, com working directory em
+  `apps/mobile`. Sem fixar o serverRoot no proprio app, o bundle de release
+  falha com `None of these files exist: ..\..\index.js`. O modo debug nunca
+  mostra isso, porque o bundle vem do dev server.
+
 ## Armadilhas
 
 - Comandos do Expo rodam em `apps/mobile`. Rodar `expo run:android` na raiz gera

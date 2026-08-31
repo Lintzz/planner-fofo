@@ -33,6 +33,14 @@ build/
 !apps/desktop/build/
 !apps/desktop/build/**
 
+# Chaves de assinatura — nunca commitar
+*.jks
+*.p12
+*.keystore
+keystore.properties
+# APKs gerados por `npm run mobile:apk`
+apps/mobile/release/
+
 # Supabase local
 supabase/.branches/
 supabase/.temp/

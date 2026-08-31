@@ -45,8 +45,12 @@ administrador.
 
 ### Android
 
-Não há loja: o APK sai de um build local (`npx expo run:android`). Instruções em
-[Rodando o projeto](#-rodando-o-projeto).
+O APK sai em **[Releases](https://github.com/Lintzz/planner-fofo/releases/latest)**
+(`PlannerFofo-x.y.z.apk`). Como não vem da Play Store, o Android pede para
+liberar *"instalar apps desconhecidos"* para o navegador ou gerenciador de
+arquivos na primeira vez.
+
+Para gerar o seu, veja [APK do Android](#-apk-do-android).
 
 ---
 
@@ -240,16 +244,67 @@ e o `latest.yml`. Todo app instalado pega a atualização na próxima abertura.
 Para gerar o instalador **sem** publicar: `npm run desktop:package` (sai em
 `apps/desktop/release/`).
 
-### E o mobile?
+---
 
-O Android não tem o equivalente direto: cada versão exige um APK novo assinado, e
-o app não pode se substituir sozinho sem passar por uma loja. Dois caminhos, se
-isso virar necessidade:
+## 📱 APK do Android
+
+O build é **local**, com o Gradle do projeto nativo. Não precisa de conta no Expo
+nem do EAS Build:
+
+```bash
+npm run mobile:apk     # -> apps/mobile/release/PlannerFofo-x.y.z.apk
+```
+
+O script roda o Gradle, confere com qual chave o APK saiu assinado e copia o
+arquivo já com o número da versão.
+
+### Assinatura
+
+O template do React Native assina o build de release com a **chave de debug** —
+a mesma chave pública que vem no SDK, igual na máquina de todo mundo. Um APK
+assim instala, mas qualquer pessoa consegue publicar uma "atualização" que o
+Android aceita como sendo do mesmo app.
+
+Trocar isso à mão em `android/app/build.gradle` não resolve: a pasta `android/`
+é gerada pelo `expo prebuild` e está no `.gitignore`, então a edição some no
+próximo `--clean`. Por isso a troca mora num config plugin,
+`apps/mobile/plugins/assinatura-android.js`, que o Expo reaplica toda vez que
+regenera o projeto nativo.
+
+As credenciais **não** ficam no repositório. O Gradle as lê de
+`~/.gradle/gradle.properties`:
+
+```properties
+PLANNER_FOFO_KEYSTORE=/caminho/para/planner-fofo-release.p12
+PLANNER_FOFO_KEY_ALIAS=planner-fofo
+PLANNER_FOFO_KEYSTORE_PASSWORD=...
+PLANNER_FOFO_KEY_PASSWORD=...
+```
+
+Para criar a sua chave:
+
+```bash
+keytool -genkeypair -v -storetype PKCS12   -keystore planner-fofo-release.p12 -alias planner-fofo   -keyalg RSA -keysize 2048 -validity 10000
+```
+
+> ⚠️ **Guarde o arquivo `.p12` e a senha.** O Android só aceita atualizar um app
+> instalado se o APK novo vier assinado com a **mesma** chave. Perdeu a chave,
+> perdeu a possibilidade de atualizar — quem já tem o app precisa desinstalar e
+> instalar de novo, perdendo os dados locais.
+
+Sem essas propriedades o build cai de volta na chave de debug, de propósito:
+quem clonou só para mexer no código continua conseguindo compilar. O
+`npm run mobile:apk` avisa em letras grandes quando isso acontece.
+
+### Atualização
+
+O Android não tem o equivalente ao `electron-updater`: um app fora de loja não
+pode se substituir sozinho. Dois caminhos, se isso virar necessidade:
 
 - **EAS Update** — atualiza o *bundle JS* pelo ar, sem loja. Cobre a maior parte
   das mudanças (telas, regras, textos); não cobre dependência nativa nova.
 - **Checagem de versão** — o app compara a própria versão com a última release do
-  GitHub e abre o link do APK. Simples, mas a instalação é manual.
+  GitHub e abre o link do APK. Simples, mas a instalação continua manual.
 
 ---
 
@@ -263,6 +318,7 @@ isso virar necessidade:
 | `npm run desktop:release` | build + publica a release no GitHub |
 | `npm run mobile` | Expo dev server |
 | `npm run mobile:android` | `expo run:android` no workspace mobile |
+| `npm run mobile:apk` | APK de release assinado, em `apps/mobile/release` |
 | `npm run typecheck` | TypeScript em todos os workspaces |
 | `npm run check:db` | sanidade do backend com a chave pública (sai 1 se falhar) |
 | `npm run icones` | regenera os ícones dos dois apps (PNG procedural) |
