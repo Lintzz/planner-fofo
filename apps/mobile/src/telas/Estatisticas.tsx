@@ -85,10 +85,12 @@ export function Estatisticas({ planner }: { planner: PlannerStore }) {
             return (
               <View key={`${barra.rotulo}-${i}`} style={estilos.colunaBarra}>
                 <Text style={estilos.valorBarra}>{barra.valor > 0 ? `${barra.valor}%` : ''}</Text>
-                <Gradiente
-                  cores={cores}
-                  style={[estilos.barra, { height: `${altura * 100}%` }]}
-                />
+                <View style={estilos.trilhaBarra}>
+                  <Gradiente
+                    cores={cores}
+                    style={[estilos.barra, { height: `${altura * 100}%` }]}
+                  />
+                </View>
                 <Text style={estilos.rotuloBarra}>{barra.rotulo}</Text>
               </View>
             );
@@ -183,6 +185,9 @@ const estilos = StyleSheet.create({
   grafico: { flexDirection: 'row', alignItems: 'flex-end', height: ALTURA_GRAFICO },
   colunaBarra: { flex: 1, alignItems: 'center', gap: 7, height: '100%', justifyContent: 'flex-end' },
   valorBarra: { fontFamily: F.nunitoExtra, fontSize: 9.5, color: CORES.apoio },
+  // A barra e percentual desta trilha, e nao da coluna inteira: com 100% ela
+  // enchia a coluna toda e empurrava o "%" para cima do titulo do cartao.
+  trilhaBarra: { flex: 1, width: '100%', justifyContent: 'flex-end' },
   barra: { width: '100%', borderTopLeftRadius: 999, borderTopRightRadius: 999, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
   rotuloBarra: { fontFamily: F.nunitoExtra, fontSize: 9.5, color: '#b295c0' },
 

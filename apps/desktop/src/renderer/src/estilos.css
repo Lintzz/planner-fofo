@@ -883,6 +883,19 @@ button {
   font-weight: 800;
   color: var(--apoio);
 }
+/*
+ * A barra é percentual desta trilha, e não da coluna inteira: com 100% ela
+ * enchia a coluna toda e empurrava o "%" para fora do gráfico, por cima do
+ * título do cartão.
+ */
+.grafico__trilha {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
 .grafico__barra {
   width: 100%;
   max-width: 76px;

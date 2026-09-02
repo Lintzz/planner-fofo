@@ -75,10 +75,12 @@ export function Estatisticas({ planner }: { planner: PlannerStore }) {
             return (
               <div key={`${barra.rotulo}-${i}`} className="grafico__coluna">
                 <span className="grafico__valor">{barra.valor > 0 ? `${barra.valor}%` : ''}</span>
-                <div
-                  className="grafico__barra"
-                  style={{ height: `${Math.max(4, barra.valor)}%`, background: fundo }}
-                />
+                <div className="grafico__trilha">
+                  <div
+                    className="grafico__barra"
+                    style={{ height: `${Math.max(4, barra.valor)}%`, background: fundo }}
+                  />
+                </div>
                 <span className="grafico__rotulo">{barra.rotulo}</span>
               </div>
             );
