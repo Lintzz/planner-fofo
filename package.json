@@ -1,7 +1,7 @@
 {
   "name": "planner-fofo",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Planner Fofo — planner de habitos, estudos e tarefas. Monorepo mobile (Expo) + desktop (Electron/Vite).",
   "workspaces": [
     "apps/*",

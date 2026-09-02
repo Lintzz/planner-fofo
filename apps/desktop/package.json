@@ -1,6 +1,6 @@
 {
   "name": "@planner-fofo/desktop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "Planner Fofo para desktop — Electron + React + Vite.",
   "author": {
