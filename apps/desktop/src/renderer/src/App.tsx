@@ -5,10 +5,9 @@
  * 268px com marca, navegação, sequência e perfil; à direita o conteúdo com o
  * cabeçalho grande e a ação principal.
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ambienteConfigurado,
-  sair,
   saudacao,
   textosDaLista,
   tituloDaAba,
@@ -41,6 +40,8 @@ export function App() {
 function Conteudo() {
   const planner = usePlanner(supabase);
   const { aba, sessao, autenticando, carregando, erro } = planner;
+
+  const [confirmandoSaida, setConfirmandoSaida] = useState(false);
 
   useEffect(() => {
     if (erro) console.warn('[Planner Fofo]', erro);
@@ -95,7 +96,7 @@ function Conteudo() {
             <button
               type="button"
               className="usuaria__plano"
-              onClick={() => void sair(supabase)}
+              onClick={() => setConfirmandoSaida(true)}
               title="Encerrar a sessão"
             >
               sair da conta
@@ -135,6 +136,59 @@ function Conteudo() {
       <ModalHabito planner={planner} />
       <ModalItem planner={planner} />
       <Confete visivel={planner.comemorando} />
+
+      {confirmandoSaida ? (
+        <ConfirmarSaida aoCancelar={() => setConfirmandoSaida(false)} aoSair={planner.sair} />
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Pergunta antes de encerrar a sessão — um clique errado na barra lateral não
+ * pode custar ter que digitar a senha de novo.
+ */
+function ConfirmarSaida({
+  aoCancelar,
+  aoSair,
+}: {
+  aoCancelar: () => void;
+  aoSair: () => Promise<void>;
+}) {
+  useEffect(() => {
+    const aoTeclar = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') aoCancelar();
+    };
+    window.addEventListener('keydown', aoTeclar);
+    return () => window.removeEventListener('keydown', aoTeclar);
+  }, [aoCancelar]);
+
+  return (
+    <div className="fundo-modal" onClick={aoCancelar}>
+      <div
+        className="modal modal--confirmar"
+        role="dialog"
+        aria-modal
+        aria-label="Sair da conta"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal__cabecalho">
+          <span className="modal__titulo">Sair da conta?</span>
+        </div>
+
+        <p className="modal__texto">
+          Seus hábitos e listas ficam salvos — é só entrar de novo quando quiser 💜
+        </p>
+
+        <div className="modal__acoes">
+          <button type="button" className="botao-excluir" onClick={aoCancelar}>
+            Cancelar
+          </button>
+          <button type="button" className="botao-salvar" onClick={() => void aoSair()}>
+            Sair da conta
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

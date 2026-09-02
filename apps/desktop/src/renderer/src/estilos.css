@@ -1024,6 +1024,16 @@ button {
 .modal--item {
   width: 540px;
 }
+/* Confirmar saída: só um título e uma frase, o 520px padrão sobra. */
+.modal--confirmar {
+  width: 420px;
+}
+.modal__texto {
+  margin: 0;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--apoio-forte);
+}
 .modal__cabecalho {
   display: flex;
   align-items: center;

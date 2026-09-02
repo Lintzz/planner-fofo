@@ -7,6 +7,7 @@
  */
 import React, { useEffect, useMemo } from 'react';
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -124,6 +125,15 @@ function Conteudo() {
                 <Text style={estilos.streakNumero}>{planner.streak}</Text>
                 <Text style={estilos.streakRotulo}>DIAS</Text>
               </View>
+
+              <Pressable
+                onPress={() => confirmarSaida(planner.sair)}
+                accessibilityRole="button"
+                accessibilityLabel="Sair da conta"
+                style={[estilos.avatar, sombra('suave')]}
+              >
+                <Text style={estilos.avatarEmoji}>🌷</Text>
+              </Pressable>
             </View>
 
             <ScrollView
@@ -192,6 +202,22 @@ function Conteudo() {
   );
 }
 
+/**
+ * Pergunta antes de encerrar a sessao — um toque errado no cabeçalho não pode
+ * custar ter que digitar a senha de novo. `Alert` é módulo nativo, não
+ * componente de view, então não esbarra na armadilha do `ActivityIndicator`.
+ */
+function confirmarSaida(sair: () => Promise<void>) {
+  Alert.alert(
+    'Sair da conta?',
+    'Seus hábitos e listas ficam salvos — é só entrar de novo quando quiser 💜',
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: () => void sair() },
+    ],
+  );
+}
+
 function Carregando() {
   return (
     <View style={estilos.centro}>
@@ -228,6 +254,7 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 9,
   },
   cabecalhoTextos: { gap: 1, flex: 1 },
   saudacao: { fontFamily: F.nunito, fontSize: 12.5, color: CORES.subtitulo, letterSpacing: 0.4 },
@@ -248,6 +275,19 @@ const estilos = StyleSheet.create({
   streakEmoji: { fontSize: 15 },
   streakNumero: { fontFamily: F.baloo, fontSize: 16, color: '#d6549a' },
   streakRotulo: { fontFamily: F.nunitoExtra, fontSize: 10.5, color: '#c07fb3', letterSpacing: 0.6 },
+
+  // Mesma pílula do chip de sequência, só que redonda.
+  avatar: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fdeef8',
+    borderWidth: 1.5,
+    borderColor: '#f7d9ee',
+    borderRadius: 999,
+  },
+  avatarEmoji: { fontSize: 17 },
 
   conteudo: { paddingHorizontal: 22, paddingTop: 6, paddingBottom: 130 },
 

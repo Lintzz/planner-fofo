@@ -27,7 +27,7 @@ import {
   listarTags,
 } from '../api/listas';
 import { carregarEstatisticas, streakAtual, type PainelEstatisticas } from '../api/estatisticas';
-import { carregarPerfil } from '../api/perfil';
+import { carregarPerfil, sair as apiSair } from '../api/perfil';
 import type { ChavePaleta } from '../theme';
 import type {
   Aba,
@@ -125,6 +125,18 @@ export function usePlanner(cliente: ClientePlanner) {
       vivo = false;
       assinatura.subscription.unsubscribe();
     };
+  }, [cliente]);
+
+  /**
+   * Encerra a sessao. Nao limpa o estado a mao: o `onAuthStateChange` acima
+   * zera a sessao e cada app volta sozinho para a tela de login.
+   */
+  const sair = useCallback(async () => {
+    try {
+      await apiSair(cliente);
+    } catch (e) {
+      setErro(mensagemDeErro(e));
+    }
   }, [cliente]);
 
   // --- Carga inicial -------------------------------------------------------
@@ -458,6 +470,7 @@ export function usePlanner(cliente: ClientePlanner) {
     sessao,
     autenticando,
     perfil,
+    sair,
 
     // navegacao
     aba,
