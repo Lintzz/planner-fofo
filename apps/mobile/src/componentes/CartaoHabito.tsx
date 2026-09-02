@@ -1,27 +1,34 @@
 /** Cartão de hábito fixo da aba Hoje, com as barrinhas da semana. */
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { DIAS, contadorDaSemana, type HabitoDaSemana } from '@planner-fofo/shared';
+import { DIAS, DIAS_LONGOS, contadorDaSemana, type HabitoDaSemana } from '@planner-fofo/shared';
 import { CORES, F, paleta, sombra } from '../tema';
 
 /**
+ * Tocar numa barrinha da semana marca aquele dia — é o conserto de um hábito
+ * que a gente esqueceu de marcar na hora.
+ *
  * Editar é segurar o cartão — o mesmo gesto das listas de Estudos e Avulsas.
  * O lápis saiu: no celular ele ficava colado no check de marcar, e o toque
  * errado abria a folha de edição em vez de concluir o hábito.
  */
 export function CartaoHabito({
   habito,
-  indiceHoje,
+  indiceSelecionado,
+  indiceMaximo,
   aoAlternar,
+  aoAlternarDia,
   aoEditar,
 }: {
   habito: HabitoDaSemana;
-  indiceHoje: number;
+  indiceSelecionado: number;
+  indiceMaximo: number;
   aoAlternar: () => void;
+  aoAlternarDia: (dia: number) => void;
   aoEditar: () => void;
 }) {
   const p = paleta(habito.cor);
-  const feito = habito.semana[indiceHoje];
+  const feito = habito.semana[indiceSelecionado];
 
   return (
     <Pressable
@@ -69,21 +76,30 @@ export function CartaoHabito({
           const corBarra = marcado
             ? p.forte
             : agendado
-              ? i === indiceHoje
+              ? i === indiceSelecionado
                 ? p.borda
                 : CORES.diaInativo
               : CORES.diaVazio;
           const corRotulo = !agendado
             ? CORES.diaRotuloOff
-            : i === indiceHoje
+            : i === indiceSelecionado
               ? p.texto
               : CORES.diaRotuloNeutro;
 
           return (
-            <View key={i} style={estilos.dia}>
+            <Pressable
+              key={i}
+              onPress={() => aoAlternarDia(i)}
+              disabled={i > indiceMaximo}
+              hitSlop={{ top: 10, bottom: 10 }}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: marcado }}
+              accessibilityLabel={`${habito.nome} em ${DIAS_LONGOS[i]}`}
+              style={({ pressed }) => [estilos.dia, pressed && estilos.diaPressionado]}
+            >
               <View style={[estilos.barraDia, { backgroundColor: corBarra }]} />
               <Text style={[estilos.rotuloDia, { color: corRotulo }]}>{rotulo}</Text>
-            </View>
+            </Pressable>
           );
         })}
       </View>
@@ -119,7 +135,10 @@ const estilos = StyleSheet.create({
   checkIcone: { color: '#fff', fontSize: 17, fontFamily: F.baloo },
 
   semana: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-  dia: { flex: 1, alignItems: 'center', gap: 4 },
+  // Cada coluna marca o proprio dia — a barra tem 7px, entao o alvo de toque
+  // vem do padding mais o hitSlop.
+  dia: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 4 },
+  diaPressionado: { opacity: 0.5 },
   barraDia: { width: '100%', height: 7, borderRadius: 999 },
   rotuloDia: { fontSize: 9, fontFamily: F.nunitoExtra },
 });

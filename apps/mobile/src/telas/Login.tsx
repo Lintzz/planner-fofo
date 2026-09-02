@@ -24,6 +24,7 @@ export function Login() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -101,15 +102,28 @@ export function Login() {
 
           <View style={estilos.campo}>
             <RotuloCampo>Senha</RotuloCampo>
-            <TextInput
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry
-              autoComplete={ehCadastro ? 'new-password' : 'current-password'}
-              placeholder="pelo menos 6 caracteres"
-              placeholderTextColor="#d8bede"
-              style={estilos.input}
-            />
+            {/* O olhinho fica por cima do input, que abre espaço à direita. */}
+            <View style={estilos.campoSenha}>
+              <TextInput
+                value={senha}
+                onChangeText={setSenha}
+                secureTextEntry={!mostrarSenha}
+                autoComplete={ehCadastro ? 'new-password' : 'current-password'}
+                placeholder="pelo menos 6 caracteres"
+                placeholderTextColor="#d8bede"
+                style={[estilos.input, estilos.inputSenha]}
+              />
+              <Pressable
+                onPress={() => setMostrarSenha((v) => !v)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityState={{ selected: mostrarSenha }}
+                accessibilityLabel={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                style={estilos.olho}
+              >
+                <Text style={estilos.olhoIcone}>{mostrarSenha ? '🙈' : '👁'}</Text>
+              </Pressable>
+            </View>
           </View>
 
           {erro ? <Text style={estilos.erro}>{erro}</Text> : null}
@@ -160,6 +174,17 @@ const estilos = StyleSheet.create({
     gap: 16,
   },
   campo: { gap: 7 },
+  campoSenha: { justifyContent: 'center' },
+  inputSenha: { paddingRight: 50 },
+  olho: {
+    position: 'absolute',
+    right: 6,
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  olhoIcone: { fontSize: 16 },
   input: {
     borderRadius: 18,
     borderWidth: 1.5,

@@ -556,11 +556,22 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 5px;
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  cursor: pointer;
+}
+.habito__dia:hover:not(:disabled) .habito__dia-barra {
+  transform: scaleY(1.5);
+}
+.habito__dia:disabled {
+  cursor: default;
 }
 .habito__dia-barra {
   width: 100%;
   height: 8px;
   border-radius: 999px;
+  transition: transform 0.12s ease;
 }
 .habito__dia-rotulo {
   font-size: 9.5px;
@@ -1064,6 +1075,33 @@ button {
 .campo__input:focus {
   border-color: var(--campo-borda-foco);
 }
+/* O olhinho fica sobreposto ao input, entao o campo abre espaco a direita. */
+.campo__senha {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.campo__senha .campo__input {
+  width: 100%;
+  padding-right: 48px;
+}
+.campo__olho {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: 12px;
+}
+.campo__olho:hover {
+  background: #fdeef8;
+}
+
 .campo__apoio {
   font-size: 12px;
   font-weight: 700;
@@ -1136,6 +1174,55 @@ button {
   background: var(--cartao-alt);
   border-color: #f2e6ef;
   color: #c9aec5;
+}
+
+/* Faixa de dia da aba "Seu dia": e ela que da acesso aos dias passados. */
+.faixa-dia {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.faixa-dia__seta {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1.5px solid var(--campo-borda);
+  background: var(--campo-fundo);
+  color: var(--titulo);
+  font-family: var(--fonte-titulo);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.faixa-dia__seta:hover:not(:disabled) {
+  border-color: var(--campo-borda-foco);
+}
+.faixa-dia__seta:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+.faixa-dia__rotulo {
+  font-family: var(--fonte-titulo);
+  font-size: 15px;
+  color: var(--titulo);
+  min-width: 118px;
+  text-align: center;
+}
+.faixa-dia__data {
+  flex: 0 1 170px;
+  padding: 9px 13px;
+  font-size: 13px;
+}
+.faixa-dia__hoje {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--fonte-corpo);
+  font-weight: 800;
+  font-size: 12.5px;
+  color: var(--apoio);
+  text-decoration: underline;
 }
 
 .atalhos-data {

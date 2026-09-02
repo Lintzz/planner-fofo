@@ -2,7 +2,7 @@
   "expo": {
     "name": "Planner Fofo",
     "slug": "planner-fofo",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "scheme": "plannerfofo",
     "userInterfaceStyle": "light",

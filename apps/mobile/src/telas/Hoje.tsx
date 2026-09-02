@@ -3,9 +3,12 @@ import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   GRADIENTES,
+  hoje,
   mensagemDoDia,
   ordenarParaHoje,
   resumoDeHoje,
+  rotuloData,
+  somarDias,
   type PlannerStore,
 } from '@planner-fofo/shared';
 import { CORES, F, sombra } from '../tema';
@@ -14,13 +17,48 @@ import { Anel } from '../componentes/Anel';
 import { CartaoHabito } from '../componentes/CartaoHabito';
 
 export function Hoje({ planner }: { planner: PlannerStore }) {
-  const { habitos, pct, indice, perfil } = planner;
+  const { habitos, pct, indice, indiceMaximo, perfil, dataSelecionada, ehHoje } = planner;
+  const rotulo = rotuloData(dataSelecionada);
 
   // Os hábitos de hoje ficam no topo; os de outros dias seguem abaixo.
   const emOrdem = useMemo(() => ordenarParaHoje(habitos, indice), [habitos, indice]);
 
   return (
     <View style={estilos.raiz}>
+      {/* Seletor de dia: é por ele que se volta para ontem e se marca o hábito
+          que ficou esquecido. Não passa de hoje. */}
+      <View style={estilos.seletorData}>
+        <Pressable
+          hitSlop={10}
+          onPress={() => planner.irParaDia(somarDias(dataSelecionada, -1))}
+          accessibilityLabel="Dia anterior"
+          style={estilos.seta}
+        >
+          <Text style={estilos.setaTexto}>‹</Text>
+        </Pressable>
+
+        <Pressable
+          hitSlop={8}
+          onPress={() => planner.irParaDia(hoje())}
+          disabled={ehHoje}
+          accessibilityLabel="Voltar para hoje"
+          style={estilos.dataCentro}
+        >
+          <Text style={estilos.dataEscolhida}>{rotulo}</Text>
+          {!ehHoje ? <Text style={estilos.voltarHoje}>toque pra voltar pra hoje</Text> : null}
+        </Pressable>
+
+        <Pressable
+          hitSlop={10}
+          onPress={() => planner.irParaDia(somarDias(dataSelecionada, 1))}
+          disabled={ehHoje}
+          accessibilityLabel="Próximo dia"
+          style={estilos.seta}
+        >
+          <Text style={[estilos.setaTexto, ehHoje && estilos.setaDesligada]}>›</Text>
+        </Pressable>
+      </View>
+
       <Gradiente cores={GRADIENTES.heroi} style={[estilos.heroi, sombra('media')]}>
         {/* Bolha decorativa do canto superior direito. */}
         <View style={estilos.bolha} />
@@ -34,7 +72,9 @@ export function Hoje({ planner }: { planner: PlannerStore }) {
 
           <View style={estilos.heroiTextos}>
             <Text style={estilos.mensagem}>{mensagemDoDia(pct)}</Text>
-            <Text style={estilos.resumo}>{resumoDeHoje(habitos, indice)}</Text>
+            <Text style={estilos.resumo}>
+              {resumoDeHoje(habitos, indice, rotulo.toLowerCase())}
+            </Text>
 
             <View style={estilos.trilha}>
               <Gradiente
@@ -59,8 +99,10 @@ export function Hoje({ planner }: { planner: PlannerStore }) {
           <CartaoHabito
             key={habito.id}
             habito={habito}
-            indiceHoje={indice}
+            indiceSelecionado={indice}
+            indiceMaximo={indiceMaximo}
             aoAlternar={() => void planner.alternarHabito(habito.id)}
+            aoAlternarDia={(dia) => void planner.alternarHabitoNoDia(habito.id, dia)}
             aoEditar={() => planner.abrirEdicaoHabito(habito.id)}
           />
         ))}
@@ -68,7 +110,9 @@ export function Hoje({ planner }: { planner: PlannerStore }) {
 
       {/* O gesto não tem ícone que o anuncie, então a dica faz esse papel. */}
       {emOrdem.length ? (
-        <Text style={estilos.dica}>segure um hábito pra editar ✏️</Text>
+        <Text style={estilos.dica}>
+          segure um hábito pra editar ✏️ · toque numa barrinha pra marcar outro dia
+        </Text>
       ) : null}
     </View>
   );
@@ -76,6 +120,24 @@ export function Hoje({ planner }: { planner: PlannerStore }) {
 
 const estilos = StyleSheet.create({
   raiz: { gap: 18 },
+
+  seletorData: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: CORES.campoBorda,
+    backgroundColor: CORES.campoFundo,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+  },
+  seta: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  setaTexto: { fontFamily: F.baloo, fontSize: 22, color: CORES.fechar },
+  setaDesligada: { opacity: 0.35 },
+  dataCentro: { flex: 1, alignItems: 'center', gap: 1 },
+  dataEscolhida: { fontFamily: F.baloo, fontSize: 15, color: CORES.titulo },
+  voltarHoje: { fontFamily: F.nunito, fontSize: 10.5, color: CORES.apoio },
 
   heroi: { borderRadius: 32, padding: 22, overflow: 'hidden' },
   bolha: {

@@ -3,6 +3,7 @@ import React from 'react';
 import {
   CORES,
   DIAS,
+  DIAS_LONGOS,
   contadorDaSemana,
   paleta,
   type HabitoDaSemana,
@@ -10,17 +11,21 @@ import {
 
 export function CartaoHabito({
   habito,
-  indiceHoje,
+  indiceSelecionado,
+  indiceMaximo,
   aoAlternar,
+  aoAlternarDia,
   aoEditar,
 }: {
   habito: HabitoDaSemana;
-  indiceHoje: number;
+  indiceSelecionado: number;
+  indiceMaximo: number;
   aoAlternar: () => void;
+  aoAlternarDia: (dia: number) => void;
   aoEditar: () => void;
 }) {
   const p = paleta(habito.cor);
-  const feito = habito.semana[indiceHoje];
+  const feito = habito.semana[indiceSelecionado];
 
   return (
     <div className="habito" style={{ background: p.bg, borderColor: p.borda }}>
@@ -59,19 +64,30 @@ export function CartaoHabito({
         </button>
       </div>
 
+      {/* Cada barrinha marca o proprio dia — e por aqui que se conserta um
+          habito esquecido. Dia no futuro fica desligado. */}
       <div className="habito__semana">
         {DIAS.map((rotulo, i) => {
           const agendado = habito.agenda[i];
           const marcado = habito.semana[i];
+          const futuro = i > indiceMaximo;
           return (
-            <div key={i} className="habito__dia">
+            <button
+              key={i}
+              type="button"
+              className="habito__dia"
+              disabled={futuro}
+              onClick={() => aoAlternarDia(i)}
+              aria-pressed={marcado}
+              aria-label={`${habito.nome} em ${DIAS_LONGOS[i]}`}
+            >
               <div
                 className="habito__dia-barra"
                 style={{
                   background: marcado
                     ? p.forte
                     : agendado
-                      ? i === indiceHoje
+                      ? i === indiceSelecionado
                         ? p.borda
                         : CORES.diaInativo
                       : CORES.diaVazio,
@@ -82,14 +98,14 @@ export function CartaoHabito({
                 style={{
                   color: !agendado
                     ? CORES.diaRotuloOff
-                    : i === indiceHoje
+                    : i === indiceSelecionado
                       ? p.texto
                       : CORES.diaRotuloNeutro,
                 }}
               >
                 {rotulo}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>

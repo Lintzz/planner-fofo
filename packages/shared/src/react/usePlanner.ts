@@ -41,7 +41,7 @@ import type {
   RascunhoItem,
   Tag,
 } from '../types';
-import { hoje, indiceDia } from '../lib/datas';
+import { hoje, indiceDia, inicioDaSemana, somarDias } from '../lib/datas';
 import {
   agruparPorData,
   feitosDeHoje,
@@ -89,7 +89,21 @@ export function usePlanner(cliente: ClientePlanner) {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  const indice = indiceDia();
+  // O dia que a aba "Seu dia" esta mostrando. Comeca em hoje e nunca passa
+  // dele: marcar habito que ainda nao aconteceu so sujaria as estatisticas.
+  const [dataSelecionada, setDataSelecionada] = useState(hoje());
+  const ehHoje = dataSelecionada === hoje();
+  const indice = indiceDia(dataSelecionada);
+
+  // Ultimo dia marcavel da semana exibida: hoje, se for a semana corrente;
+  // domingo, se for uma semana que ja passou. Sai do hook para os dois apps
+  // desenharem o mesmo limite.
+  const indiceMaximo =
+    inicioDaSemana(dataSelecionada) === inicioDaSemana(hoje()) ? indiceDia(hoje()) : 6;
+
+  const irParaDia = useCallback((iso: string) => {
+    setDataSelecionada(iso > hoje() ? hoje() : iso);
+  }, []);
 
   // --- Sessao --------------------------------------------------------------
 
@@ -119,27 +133,20 @@ export function usePlanner(cliente: ClientePlanner) {
     if (!sessao) return;
     setErro(null);
     try {
-      const [
-        novoPerfil,
-        novosHabitos,
-        tagsEstudos,
-        itensEstudos,
-        tagsTarefas,
-        itensTarefas,
-        novoStreak,
-      ] = await Promise.all([
-        carregarPerfil(cliente),
-        listarHabitosDaSemana(cliente),
-        listarTags(cliente, 'estudos'),
-        listarItens(cliente, 'estudos'),
-        listarTags(cliente, 'tarefas'),
-        listarItens(cliente, 'tarefas'),
-        streakAtual(cliente),
-      ]);
+      // Os habitos ficam de fora: quem os carrega e o efeito da semana logo
+      // abaixo, que reage a troca de dia sem refazer o resto.
+      const [novoPerfil, tagsEstudos, itensEstudos, tagsTarefas, itensTarefas, novoStreak] =
+        await Promise.all([
+          carregarPerfil(cliente),
+          listarTags(cliente, 'estudos'),
+          listarItens(cliente, 'estudos'),
+          listarTags(cliente, 'tarefas'),
+          listarItens(cliente, 'tarefas'),
+          streakAtual(cliente),
+        ]);
 
       setPerfil(novoPerfil);
       setStreak(novoStreak);
-      setHabitos(novosHabitos);
       setListas((atual) => ({
         estudos: { ...atual.estudos, tags: tagsEstudos, itens: itensEstudos },
         tarefas: { ...atual.tarefas, tags: tagsTarefas, itens: itensTarefas },
@@ -160,6 +167,21 @@ export function usePlanner(cliente: ClientePlanner) {
     void recarregar();
   }, [sessao, recarregar]);
 
+  // A semana desenhada nos cartoes e a do dia escolhido, entao trocar de dia
+  // recarrega so os habitos — e nao a lista, o perfil e a sequencia junto.
+  const recarregarHabitos = useCallback(async () => {
+    if (!sessao) return;
+    try {
+      setHabitos(await listarHabitosDaSemana(cliente, dataSelecionada));
+    } catch (e) {
+      setErro(mensagemDeErro(e));
+    }
+  }, [cliente, sessao, dataSelecionada]);
+
+  useEffect(() => {
+    void recarregarHabitos();
+  }, [recarregarHabitos]);
+
   // Estatisticas sao recarregadas ao entrar na aba, trocar de periodo ou
   // marcar um habito — nao a cada render.
   const recarregarEstatisticas = useCallback(async () => {
@@ -177,23 +199,32 @@ export function usePlanner(cliente: ClientePlanner) {
 
   // --- Habitos -------------------------------------------------------------
 
-  const alternarHabito = useCallback(
-    async (id: string) => {
+  /**
+   * Marca ou desmarca um habito num dia da semana exibida (0 = segunda).
+   *
+   * E o unico caminho de marcacao: o check do cartao passa o dia selecionado e
+   * as barrinhas passam o dia em que se tocou. Dia no futuro nao marca.
+   */
+  const alternarHabitoNoDia = useCallback(
+    async (id: string, dia: number) => {
+      const data = somarDias(inicioDaSemana(dataSelecionada), dia);
+      if (data > hoje()) return;
+
       // Atualizacao otimista: o toque tem que responder na hora.
       let virouCompleto = false;
       setHabitos((atual) => {
         const proximo = atual.map((h) =>
-          h.id === id
-            ? { ...h, semana: h.semana.map((v, i) => (i === indice ? !v : v)) }
-            : h,
+          h.id === id ? { ...h, semana: h.semana.map((v, i) => (i === dia ? !v : v)) } : h,
         );
-        virouCompleto = porcentagemDoDia(proximo, indice) === 100;
+        virouCompleto = porcentagemDoDia(proximo, dia) === 100;
         return proximo;
       });
 
       try {
-        await apiAlternarHabito(cliente, id, hoje());
-        if (virouCompleto && (perfil?.comemoracao ?? true)) {
+        await apiAlternarHabito(cliente, id, data);
+        // Fechar um dia passado e conserto de historico, nao festa: o confete
+        // so cai quando o dia completado e o de hoje.
+        if (virouCompleto && data === hoje() && (perfil?.comemoracao ?? true)) {
           setComemorando(true);
           setTimeout(() => setComemorando(false), 4200);
         }
@@ -202,10 +233,15 @@ export function usePlanner(cliente: ClientePlanner) {
         if (aba === 'stats') void recarregarEstatisticas();
       } catch (e) {
         setErro(mensagemDeErro(e));
-        void recarregar(); // desfaz o otimismo trazendo a verdade do banco
+        void recarregarHabitos(); // desfaz o otimismo trazendo a verdade do banco
       }
     },
-    [cliente, indice, perfil, aba, recarregarEstatisticas, recarregar],
+    [cliente, dataSelecionada, perfil, aba, recarregarEstatisticas, recarregarHabitos],
+  );
+
+  const alternarHabito = useCallback(
+    (id: string) => alternarHabitoNoDia(id, indice),
+    [alternarHabitoNoDia, indice],
   );
 
   const abrirNovoHabito = useCallback(() => setRascunho(rascunhoNovo()), []);
@@ -235,22 +271,22 @@ export function usePlanner(cliente: ClientePlanner) {
     try {
       await apiSalvarHabito(cliente, rascunho);
       setRascunho(null);
-      await recarregar();
+      await recarregarHabitos();
     } catch (e) {
       setErro(mensagemDeErro(e));
     }
-  }, [cliente, rascunho, recarregar]);
+  }, [cliente, rascunho, recarregarHabitos]);
 
   const excluirDoRascunho = useCallback(async () => {
     if (!rascunho?.id) return;
     try {
       await apiExcluirHabito(cliente, rascunho.id);
       setRascunho(null);
-      await recarregar();
+      await recarregarHabitos();
     } catch (e) {
       setErro(mensagemDeErro(e));
     }
-  }, [cliente, rascunho, recarregar]);
+  }, [cliente, rascunho, recarregarHabitos]);
 
   // --- Listas --------------------------------------------------------------
 
@@ -444,8 +480,15 @@ export function usePlanner(cliente: ClientePlanner) {
     feitos,
     indice,
 
+    // dia mostrado na aba "Seu dia"
+    dataSelecionada,
+    ehHoje,
+    indiceMaximo,
+    irParaDia,
+
     // habitos
     alternarHabito,
+    alternarHabitoNoDia,
     rascunho,
     abrirNovoHabito,
     abrirEdicaoHabito,

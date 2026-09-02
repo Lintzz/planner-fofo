@@ -8,6 +8,7 @@ export function Login() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -76,15 +77,26 @@ export function Login() {
 
           <label className="campo">
             <span className="campo__rotulo">Senha</span>
-            <input
-              className="campo__input"
-              type="password"
-              autoComplete={ehCadastro ? 'new-password' : 'current-password'}
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              placeholder="pelo menos 6 caracteres"
-              required
-            />
+            <div className="campo__senha">
+              <input
+                className="campo__input"
+                type={mostrarSenha ? 'text' : 'password'}
+                autoComplete={ehCadastro ? 'new-password' : 'current-password'}
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                placeholder="pelo menos 6 caracteres"
+                required
+              />
+              <button
+                type="button"
+                className="campo__olho"
+                onClick={() => setMostrarSenha((v) => !v)}
+                aria-pressed={mostrarSenha}
+                aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+              >
+                {mostrarSenha ? '🙈' : '👁'}
+              </button>
+            </div>
           </label>
 
           {erro ? <span className="login__erro">{erro}</span> : null}

@@ -113,10 +113,17 @@ export function mensagemDoDia(pct: number): string {
   return 'Quase lá! Falta pouquinho 💜';
 }
 
-/** "3 de 5 hábitos de hoje". */
-export function resumoDeHoje(habitos: HabitoDaSemana[], indice = indiceDia()): string {
+/**
+ * "3 de 5 hábitos de hoje" — ou de outro dia, quando a tela esta mostrando um
+ * dia passado ("3 de 5 hábitos de ontem").
+ */
+export function resumoDeHoje(
+  habitos: HabitoDaSemana[],
+  indice = indiceDia(),
+  rotulo = 'hoje',
+): string {
   const previstos = habitosDeHoje(habitos, indice);
-  return `${feitosDeHoje(habitos, indice)} de ${previstos.length} hábitos de hoje`;
+  return `${feitosDeHoje(habitos, indice)} de ${previstos.length} hábitos de ${rotulo}`;
 }
 
 /** "4/7 essa semana · meta batida! 🎀" */
